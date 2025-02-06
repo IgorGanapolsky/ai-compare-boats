@@ -187,92 +187,142 @@ body {
 .detailed-comparison {
   background: white;
   border-radius: 8px;
-  padding: 2rem;
+  padding: 2.5rem;
   margin-top: 2rem;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
+.detailed-comparison h2 {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
 .key-specifications {
+  margin-bottom: 3rem;
+}
+
+.key-specifications h3 {
+  text-align: center;
   margin-bottom: 2rem;
 }
 
 .specs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 1.5rem;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1rem;
   background: #f8f9fa;
-  padding: 1.5rem;
+  padding: 2rem;
   border-radius: 8px;
 }
 
 .spec-item {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  align-items: center;
+  text-align: center;
+  gap: 0.75rem;
 }
 
 .spec-label {
   color: #666;
   font-size: 0.9rem;
+  margin-bottom: 0.5rem;
 }
 
 .spec-values {
   display: flex;
-  justify-content: space-between;
+  justify-content: center;
+  gap: 1rem;
   font-weight: 500;
+  font-size: 1.1rem;
 }
 
 .spec-comparison {
   font-size: 0.9rem;
-  padding-top: 0.5rem;
-  border-top: 1px solid #e0e0e0;
+  color: #d32f2f;
+  margin-top: 0.5rem;
 }
 
 .spec-comparison.good {
   color: #2e7d32;
 }
 
-.spec-comparison.warning {
-  color: #d32f2f;
+.features-analysis {
+  margin-top: 3rem;
 }
 
-.features-analysis {
-  margin-top: 2rem;
+.features-analysis h3 {
+  text-align: center;
+  margin-bottom: 2rem;
 }
 
 .features-summary {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-  margin-bottom: 2rem;
+  gap: 2rem;
+  margin-bottom: 3rem;
+  text-align: center;
+}
+
+.summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   background: #f8f9fa;
   padding: 1.5rem;
   border-radius: 8px;
-  text-align: center;
 }
 
 .summary-label {
   color: #666;
   font-size: 0.9rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.75rem;
 }
 
 .summary-value {
-  font-size: 1.5rem;
+  font-size: 2rem;
   font-weight: 600;
   color: #333;
 }
 
 .features-detail {
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 2rem;
 }
 
-.common-features,
-.unique-features {
-  background: #f8f9fa;
+.common-features {
+  margin-bottom: 2rem;
+}
+
+.common-features h4,
+.unique-features h4 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 1.5rem;
+  font-size: 1.1rem;
+}
+
+.feature-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: center;
   padding: 1.5rem;
+  background: #f8f9fa;
   border-radius: 8px;
+}
+
+.feature-tag {
+  background: #0066cc;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.feature-tag.common {
+  background: #2e7d32;
 }
 
 .unique-features {
@@ -281,15 +331,8 @@ body {
   gap: 2rem;
 }
 
-.feature-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 1rem;
-}
-
-.feature-tag.common {
-  background: #2e7d32;
+.unique-to-boat .feature-list {
+  min-height: 120px;
 }
 
 .feature-tag.unique-uploaded {
@@ -298,25 +341,36 @@ body {
 
 .feature-tag.unique-selected {
   background: #0066cc;
-  opacity: 0.8;
+  opacity: 0.9;
 }
 
-h2 {
-  color: #333;
-  margin: 0 0 1.5rem 0;
-  font-size: 1.5rem;
+/* Type comparison specific styles */
+.type-comparison {
+  color: #2e7d32;
+  font-size: 0.9rem;
 }
 
-h3 {
-  color: #333;
-  margin: 0 0 1rem 0;
-  font-size: 1.2rem;
+/* Length comparison specific styles */
+.length-match {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
 }
 
-h4 {
-  color: #333;
-  margin: 0 0 0.5rem 0;
-  font-size: 1rem;
+.length-match-percentage {
+  color: #2e7d32;
+  font-weight: 500;
+}
+
+/* Responsive adjustments */
+@media (max-width: 1024px) {
+  .specs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  
+  .unique-features {
+    grid-template-columns: 1fr;
+  }
 }
 
 .comparison-result {
@@ -351,4 +405,22 @@ h4 {
 
 .common-features {
   margin-top: 20px;
+}
+
+h2 {
+  color: #333;
+  margin: 0 0 1.5rem 0;
+  font-size: 1.5rem;
+}
+
+h3 {
+  color: #333;
+  margin: 0 0 1rem 0;
+  font-size: 1.2rem;
+}
+
+h4 {
+  color: #333;
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
 }

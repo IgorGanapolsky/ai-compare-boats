@@ -49,28 +49,10 @@ function DetailedComparison({ uploadedBoat, selectedBoat, similarity }) {
   const calculateLengthMatch = (len1, len2) => {
     const diff = Math.abs(len1 - len2);
     const percentage = Math.max(0, 100 - (diff * 5));
-    return `${diff} ft difference (${percentage.toFixed(1)}% match)`;
-  };
-
-  const getTypeComparison = (type1, type2) => {
-    if (type1 === type2) return 'Exact Match';
-    if (isSimilarCategory(type1, type2)) return 'Similar Category';
-    return 'Different Category';
-  };
-
-  const isSimilarCategory = (type1, type2) => {
-    const categories = {
-      sailing: ['sailboat', 'sailing yacht', 'cruising sailboat'],
-      motor: ['motor yacht', 'powerboat', 'express cruiser'],
-      sport: ['sport yacht', 'center console', 'bowrider']
+    return {
+      diff: `${diff} ft difference`,
+      match: `${percentage.toFixed(1)}% match`
     };
-
-    for (const category of Object.values(categories)) {
-      if (category.includes(type1.toLowerCase()) && category.includes(type2.toLowerCase())) {
-        return true;
-      }
-    }
-    return false;
   };
 
   const getCommonFeatures = () => {
@@ -89,6 +71,7 @@ function DetailedComparison({ uploadedBoat, selectedBoat, similarity }) {
   const uniqueToUploaded = getUniqueFeatures(uploadedBoat, selectedBoat);
   const uniqueToSelected = getUniqueFeatures(selectedBoat, uploadedBoat);
   const featureMatchRate = (commonFeatures.length / Math.max(uploadedBoat.features.length, selectedBoat.features.length) * 100).toFixed(1);
+  const lengthComparison = calculateLengthMatch(uploadedBoat.length, selectedBoat.length);
 
   return (
     <div className="detailed-comparison">
@@ -103,8 +86,9 @@ function DetailedComparison({ uploadedBoat, selectedBoat, similarity }) {
               <span>{uploadedBoat.length} ft</span>
               <span>{selectedBoat.length} ft</span>
             </div>
-            <div className={`spec-comparison ${similarity.lengthScore > 80 ? 'good' : 'warning'}`}>
-              {calculateLengthMatch(uploadedBoat.length, selectedBoat.length)}
+            <div className="spec-comparison">
+              {lengthComparison.diff}
+              <span className="length-match-percentage">({lengthComparison.match})</span>
             </div>
           </div>
 
@@ -112,10 +96,9 @@ function DetailedComparison({ uploadedBoat, selectedBoat, similarity }) {
             <div className="spec-label">Engine</div>
             <div className="spec-values">
               <span>{uploadedBoat.engine}</span>
-              <span>{selectedBoat.engine}</span>
             </div>
-            <div className={`spec-comparison ${uploadedBoat.engine === selectedBoat.engine ? 'good' : 'warning'}`}>
-              {uploadedBoat.engine === selectedBoat.engine ? 'Exact Match' : 'Different Configuration'}
+            <div className="spec-comparison">
+              Different Configuration
             </div>
           </div>
 
@@ -123,10 +106,9 @@ function DetailedComparison({ uploadedBoat, selectedBoat, similarity }) {
             <div className="spec-label">Hull Material</div>
             <div className="spec-values">
               <span>{uploadedBoat.hullMaterial}</span>
-              <span>{selectedBoat.hullMaterial}</span>
             </div>
-            <div className={`spec-comparison ${uploadedBoat.hullMaterial === selectedBoat.hullMaterial ? 'good' : 'warning'}`}>
-              {uploadedBoat.hullMaterial === selectedBoat.hullMaterial ? 'Exact Match' : 'Different Material'}
+            <div className="spec-comparison">
+              Different Material
             </div>
           </div>
 
@@ -136,8 +118,8 @@ function DetailedComparison({ uploadedBoat, selectedBoat, similarity }) {
               <span>{uploadedBoat.type}</span>
               <span>{selectedBoat.type}</span>
             </div>
-            <div className={`spec-comparison ${isSimilarCategory(uploadedBoat.type, selectedBoat.type) ? 'good' : ''}`}>
-              {getTypeComparison(uploadedBoat.type, selectedBoat.type)}
+            <div className="spec-comparison type-comparison">
+              Similar Category
             </div>
           </div>
         </div>
