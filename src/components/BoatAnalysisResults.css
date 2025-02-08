@@ -1,0 +1,89 @@
+.boat-analysis-container {
+  background: white;
+  border-radius: 8px;
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+  max-width: 600px;
+  width: 100%;
+}
+
+.boat-analysis-container h2 {
+  color: #333;
+  margin: 0 0 20px 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.analysis-section {
+  margin-bottom: 24px;
+}
+
+.analysis-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.analysis-item:last-child {
+  border-bottom: none;
+}
+
+.label {
+  color: #666;
+  font-weight: 500;
+  flex: 1;
+}
+
+.value {
+  color: #333;
+  font-weight: 600;
+  flex: 2;
+  text-align: right;
+}
+
+.features-section h3 {
+  color: #333;
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.features-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feature-tag {
+  background: #0066cc;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.loading-spinner {
+  color: #666;
+  text-align: center;
+  padding: 40px 0;
+}
+
+.error-message {
+  color: #d32f2f;
+  background: #ffebee;
+  padding: 16px;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.no-features {
+  color: #666;
+  font-style: italic;
+}
