@@ -1,6 +1,7 @@
 class CacheService {
   constructor() {
     this.CACHE_KEY = 'boats_cache';
+    this.ANALYSIS_CACHE_KEY = 'analysis_cache';
   }
 
   async cacheBoat(boat) {
@@ -121,6 +122,50 @@ class CacheService {
     
     const matchPercentage = matchingFeatures.length / Math.max(features1.length, features2.length);
     return Math.round(matchPercentage * 30);
+  }
+
+  async cacheAnalysis(imageBase64, results) {
+    try {
+      const cache = this.getAnalysisCache();
+      cache[imageBase64] = {
+        results,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(this.ANALYSIS_CACHE_KEY, JSON.stringify(cache));
+    } catch (error) {
+      console.error('Error caching analysis:', error);
+    }
+  }
+
+  async getCachedAnalysis(imageBase64) {
+    try {
+      const cache = this.getAnalysisCache();
+      const cached = cache[imageBase64];
+      
+      if (!cached) return null;
+      
+      // Cache expires after 24 hours
+      if (Date.now() - cached.timestamp > 24 * 60 * 60 * 1000) {
+        delete cache[imageBase64];
+        localStorage.setItem(this.ANALYSIS_CACHE_KEY, JSON.stringify(cache));
+        return null;
+      }
+      
+      return cached.results;
+    } catch (error) {
+      console.error('Error getting cached analysis:', error);
+      return null;
+    }
+  }
+
+  getAnalysisCache() {
+    try {
+      const cached = localStorage.getItem(this.ANALYSIS_CACHE_KEY);
+      return cached ? JSON.parse(cached) : {};
+    } catch (error) {
+      console.error('Error getting analysis cache:', error);
+      return {};
+    }
   }
 
   clearCache() {

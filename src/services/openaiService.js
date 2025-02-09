@@ -2,53 +2,22 @@ import OpenAI from 'openai';
 import { googleVisionService } from './googleVisionService';
 import { webContentService } from './webContentService';
 
-const getAnalysisPrompt = (webResults) => `
-Analyze this boat image and provide the following details in JSON format. Consider the web search results below when making your analysis.
-
-Pay special attention to the boat's length - look for visual cues like:
-- Compare to people or objects in the image
-- Look at the number of seats/layout
-- Consider the engine size relative to the hull
-- Check web results for length information
-
-{
-  "type": "Sport Boat/Bowrider/Center Console/etc",
-  "manufacturer": "Boat manufacturer if identifiable",
-  "model": "Model name/number if identifiable",
-  "year": "Estimated year or year range",
-  "length": "Length in feet (number only, no units). If exact length is not known, provide best estimate based on visual cues and similar models",
-  "engine": "Engine type and configuration if visible (e.g., 'Outboard engine, Yamaha')",
-  "hullMaterial": "Hull material and color if visible (e.g., 'White fiberglass with blue accent')",
-  "features": [
-    "List key visible features like:",
-    "- Seating arrangement",
-    "- Notable equipment (bimini top, swim platform, etc)",
-    "- Cockpit layout",
-    "- Navigation equipment",
-    "- Other distinctive features"
-  ]
-}
-
-Web search results:
-${webResults}
-
-Focus on visible characteristics and use the web search results to help confirm or identify specifications. If exact measurements aren't available, provide your best estimate based on visual cues and similar models.`;
-
 const openai = new OpenAI({
   apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true // Only for development, use backend proxy in production
+  dangerouslyAllowBrowser: true
 });
 
-if (!openai.apiKey) {
-  throw new Error('OpenAI API key is not set');
-}
-
-export async function analyzeBoatImage(base64Image) {
+export async function analyzeBoatImage(base64Image, onProgress) {
   try {
+    onProgress?.(10, 'Preparing image analysis...');
+
     // First, search for similar images using Google Vision
+    onProgress?.(20, 'Starting Google Vision analysis...');
     const visionResults = await googleVisionService.searchSimilarImages(base64Image);
-    
+    onProgress?.(35, 'Google Vision analysis complete');
+
     // Extract and format boat information from Vision results
+    onProgress?.(40, 'Processing Google Vision results...');
     const boatInfos = webContentService.extractBoatInfoFromVisionResults(visionResults);
     const webResultsText = webContentService.formatBoatInfoForPrompt(boatInfos);
 
@@ -57,91 +26,107 @@ export async function analyzeBoatImage(base64Image) {
       ? base64Image
       : `data:image/jpeg;base64,${base64Image}`;
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages: [
-        {
-          role: "user",
-          content: [
-            {
-              type: "text",
-              text: getAnalysisPrompt(webResultsText)
-            },
-            {
-              type: "image_url",
-              image_url: {
-                url: formattedBase64
-              }
+    onProgress?.(50, 'Starting OpenAI analysis...');
+
+    const messages = [
+      {
+        role: "user",
+        content: [
+          {
+            type: "text",
+            text: `Analyze this boat image and provide the following information:
+1. Detected boat type (e.g., Pontoon, Sport Fishing, Motor Yacht)
+2. Engine type if visible
+3. Estimated size
+4. Key visible features (list 3-5 key features)
+5. Style characteristics (e.g., Luxury, Sport, Family)
+
+Additional context from similar boats:
+${webResultsText}`
+          },
+          {
+            type: "image_url",
+            image_url: {
+              url: formattedBase64
             }
-          ]
-        }
-      ],
-      max_tokens: 1000,
-      temperature: 0.2
+          }
+        ]
+      }
+    ];
+
+    console.log('Making OpenAI API request...', {
+      model: 'gpt-4o',
+      maxTokens: 500,
+      temperature: 0.5,
+      messageLength: messages[0].content.length,
+      base64Length: formattedBase64.length
     });
 
-    // Extract content from the response
-    const content = response.choices[0].message.content;
-    
-    // Clean up markdown formatting if present
-    const jsonStr = content.replace(/```json\n?|\n?```/g, '').trim();
-    
-    try {
-      // Try parsing as JSON first
-      const parsedJson = JSON.parse(jsonStr);
-      
-      // Remove engine and hull info from features if they're already in top-level fields
-      if (parsedJson.features) {
-        parsedJson.features = parsedJson.features.filter(feature => 
-          !feature.toLowerCase().includes('engine') &&
-          !feature.toLowerCase().includes('hull') &&
-          feature !== 'List key visible features like:'
-        );
-      }
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages,
+      max_tokens: 500,
+      temperature: 0.5
+    });
 
-      return {
-        ...parsedJson,
-        webMatches: visionResults.matchingPages.slice(0, 3),
-        similarImages: visionResults.similarImages.slice(0, 3),
-        isOfflineAnalysis: false
-      };
-    } catch (e) {
-      // If JSON parsing fails, try parsing as text
-      const lines = content.split('\n')
-        .map(line => line.trim())
-        .filter(line => line.length > 0);
+    console.log('OpenAI API raw response:', JSON.stringify(response, null, 2));
 
-      return {
-        type: lines.find(l => l.toLowerCase().includes('type:'))?.split(':')[1]?.trim() || 'Unknown',
-        manufacturer: lines.find(l => l.toLowerCase().includes('manufacturer:'))?.split(':')[1]?.trim() || 'Unknown',
-        model: lines.find(l => l.toLowerCase().includes('model:'))?.split(':')[1]?.trim() || 'Unknown',
-        year: lines.find(l => l.toLowerCase().includes('year:'))?.split(':')[1]?.trim() || 'Unknown',
-        length: lines.find(l => l.toLowerCase().includes('length:'))?.split(':')[1]?.trim() || 'Not specified',
-        engine: lines.find(l => l.toLowerCase().includes('engine:'))?.split(':')[1]?.trim() || 'Unknown',
-        hullMaterial: lines.find(l => l.toLowerCase().includes('hull material:'))?.split(':')[1]?.trim() || 'Unknown',
-        features: lines.filter(l => l.startsWith('-') || l.startsWith('•')).map(l => l.replace(/^[-•]\s*/, '')),
-        webMatches: visionResults.matchingPages.slice(0, 3),
-        similarImages: visionResults.similarImages.slice(0, 3),
-        isOfflineAnalysis: false
-      };
+    onProgress?.(75, 'Processing OpenAI response...');
+
+    if (!response.choices || !response.choices[0] || !response.choices[0].message) {
+      console.error('Invalid OpenAI response structure:', response);
+      throw new Error('Invalid response from OpenAI');
     }
+
+    const analysis = response.choices[0].message.content;
+    console.log('OpenAI analysis text:', analysis);
+
+    // Parse the analysis text, accounting for markdown formatting
+    const detectedType = analysis.match(/1\.\s*\*\*Detected Boat Type\*\*:\s*([^\n]+)/)?.[1]?.trim() || 'Not detected';
+    const engineType = analysis.match(/2\.\s*\*\*Engine Type\*\*:\s*([^\n]+)/)?.[1]?.trim() || 'Not detected';
+    const sizeMatch = analysis.match(/3\.\s*\*\*Estimated Size\*\*:\s*([^\n]+)/)?.[1]?.trim() || '';
+    const estimatedSize = sizeMatch.match(/(\d+(?:-\d+)?\s*feet)/i)?.[1] || 'Not detected';
+
+    // Extract features (items after "4.")
+    const featuresMatch = analysis.match(/4\.\s*\*\*Key Visible Features\*\*:\s*([\s\S]*?)(?=5\.)/);
+    const keyFeatures = featuresMatch
+      ? featuresMatch[1]
+          .split('\n')
+          .map(f => f.trim())
+          .filter(f => f && !f.includes('Key Visible Features'))
+          .map(f => f.replace(/^\s*-\s*/, '').trim()) // Remove leading dash and trim
+          .filter(f => f) // Remove empty strings
+      : [];
+
+    // Extract style (items after "5.")
+    const styleMatch = analysis.match(/5\.\s*\*\*Style Characteristics\*\*:\s*([\s\S]*?)(?=\n\n|$)/);
+    const style = styleMatch
+      ? styleMatch[1]
+          .split(/[,\.]/)
+          .map(s => s.trim())
+          .filter(s => s && !s.includes('Style Characteristics'))
+          .map(s => s.replace(/^\s*-\s*/, '').trim()) // Remove any bullet points and trim
+          .filter(s => s) // Remove empty strings
+      : [];
+
+    onProgress?.(90, 'Analysis complete');
+
+    return {
+      detectedType,
+      engineType,
+      estimatedSize,
+      keyFeatures,
+      style
+    };
+
   } catch (error) {
-    console.error('Error analyzing boat image:', error);
-    throw error;
+    console.error('Error in analyzeBoatImage:', error);
+    throw new Error('Failed to analyze image. Please try again.');
   }
 }
 
 export async function compareBoats(boat1, boat2) {
   try {
-    const openai = new OpenAI({
-      apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-      dangerouslyAllowBrowser: true
-    });
-
-    if (!openai.apiKey) {
-      throw new Error('OpenAI API key is not set');
-    }
-
     const prompt = `
 Compare these two boats and provide a similarity analysis:
 
@@ -184,70 +169,9 @@ Return the results in a structured format with detailed explanations.
       temperature: 0,
     });
 
-    return parseComparisonResults(response.choices[0].message.content);
+    return response.choices[0].message.content;
   } catch (error) {
     console.error('Error comparing boats:', error);
-    throw error;
-  }
-}
-
-function parseComparisonResults(content) {
-  // Initialize scores object
-  const scores = {
-    typeScore: 0,
-    lengthScore: 0,
-    featureScore: 0,
-    totalScore: 0,
-    explanation: {
-      type: '',
-      length: '',
-      features: '',
-    }
-  };
-
-  try {
-    // Parse the content and extract scores and explanations
-    const lines = content.split('\n');
-    let currentSection = '';
-
-    lines.forEach(line => {
-      line = line.trim();
-
-      if (line.includes('Type Similarity:')) {
-        currentSection = 'type';
-      }
-      else if (line.includes('Length Similarity:')) {
-        currentSection = 'length';
-      }
-      else if (line.includes('Feature Similarity:')) {
-        currentSection = 'features';
-      }
-      else if (line.includes('points') || line.includes('score')) {
-        const score = parseInt(line.match(/\d+/)?.[0] || '0');
-
-        switch (currentSection) {
-          case 'type':
-            scores.typeScore = score;
-            scores.explanation.type = line;
-            break;
-          case 'length':
-            scores.lengthScore = score;
-            scores.explanation.length = line;
-            break;
-          case 'features':
-            scores.featureScore = score;
-            scores.explanation.features = line;
-            break;
-        }
-      }
-    });
-
-    // Calculate total score
-    scores.totalScore = scores.typeScore + scores.lengthScore + scores.featureScore;
-
-    return scores;
-  } catch (error) {
-    console.error('Error parsing comparison results:', error);
     throw error;
   }
 }

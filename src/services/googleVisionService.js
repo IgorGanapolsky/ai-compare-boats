@@ -111,6 +111,7 @@ class GoogleVisionService {
       boatResults.similarImages.sort((a, b) => (b.score || 0) - (a.score || 0));
 
       return boatResults;
+
     } catch (error) {
       console.error('Error in Google Vision search:', error);
       throw error;

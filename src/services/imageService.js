@@ -5,18 +5,38 @@ const IMAGE_TYPES = ['.png', '.jpg', '.jpeg', '.gif', '.webp'];
 class ImageService {
   async uploadImage(file) {
     try {
-      // Instead of uploading to an external service, we'll use local URL
-      return URL.createObjectURL(file);
+      const base64 = await this.fileToBase64(file);
+      return {
+        base64,
+        url: URL.createObjectURL(file)
+      };
     } catch (error) {
-      console.error('Error handling image:', error);
+      console.error('Error uploading image:', error);
       throw error;
     }
   }
 
   async preprocessImage(file) {
+    try {
+      const base64 = await this.fileToBase64(file);
+      return {
+        base64,
+        url: URL.createObjectURL(file)
+      };
+    } catch (error) {
+      console.error('Error preprocessing image:', error);
+      throw error;
+    }
+  }
+
+  async fileToBase64(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
+      reader.onload = () => {
+        // Remove data URL prefix (e.g., "data:image/jpeg;base64,")
+        const base64 = reader.result.split(',')[1];
+        resolve(base64);
+      };
       reader.onerror = reject;
       reader.readAsDataURL(file);
     });
@@ -59,28 +79,17 @@ export async function analyzeImage(imageUrl, prompt) {
 }
 
 export function isValidImageType(filename) {
-  const extension = filename.toLowerCase().substring(filename.lastIndexOf('.'));
+  const extension = filename.toLowerCase().slice(filename.lastIndexOf('.'));
   return IMAGE_TYPES.includes(extension);
 }
 
 export function extractBoatDetails(analysisResult) {
   try {
-    // Parse the analysis result to extract structured boat information
-    // This will be customized based on the exact format of your GPT-4 Vision responses
-    const details = {
-      type: '',
-      length: '',
-      engine: '',
-      hullMaterial: '',
-      features: []
-    };
-
-    // Add logic to parse the GPT-4 Vision response and populate the details object
-    // This will depend on how you structure your prompt and the expected response format
-
-    return details;
+    // Remove any markdown code block indicators
+    const cleanResult = analysisResult.replace(/```json\n?|\n?```/g, '');
+    return JSON.parse(cleanResult);
   } catch (error) {
-    console.error('Error extracting boat details:', error);
-    throw error;
+    console.error('Error parsing analysis result:', error);
+    throw new Error('Failed to parse boat details from analysis');
   }
 }
