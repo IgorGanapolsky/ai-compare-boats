@@ -1,105 +1,162 @@
-.boat-analysis-container {
+/* Results Container */
+.results-container {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 24px;
   background: white;
   border-radius: 8px;
-  padding: 24px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  margin: 20px 0;
-  max-width: 600px;
-  width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
-.boat-analysis-container h2 {
-  color: #333;
-  margin: 0 0 20px 0;
-  font-size: 24px;
-  font-weight: 600;
+/* Section Title */
+.section-title {
+  font-size: 20px;
+  color: #202124;
+  margin: 0 0 24px 0;
 }
 
-.analysis-section {
+/* Info Grid */
+.info-grid {
+  display: grid;
+  grid-template-columns: 140px 1fr;
+  gap: 16px;
   margin-bottom: 24px;
 }
 
-.analysis-item {
+.info-label {
+  color: #5f6368;
+  font-size: 14px;
+}
+
+.info-value {
+  color: #202124;
+  font-size: 14px;
+}
+
+/* Features Section */
+.features-section,
+.style-section {
+  margin-top: 24px;
+}
+
+.features-list,
+.style-tags {
   display: flex;
-  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.feature-tag {
+  background: #e8f0fe;
+  color: #1a73e8;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+.style-tag {
+  background: #f1f3f4;
+  color: #5f6368;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+/* New Search Button */
+.new-search-button {
+  display: flex;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #ddd;
+  gap: 8px;
+  margin-top: 24px;
+  padding: 8px 16px;
+  background: #1a73e8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s;
 }
 
-.analysis-item:last-child {
-  border-bottom: none;
+.new-search-button:hover {
+  background: #1557b0;
 }
 
-.label {
-  color: #666;
-  font-weight: 500;
-  flex: 1;
+.new-search-button svg {
+  width: 16px;
+  height: 16px;
 }
 
-.value {
-  color: #333;
-  font-weight: 600;
-  flex: 2;
-  text-align: right;
+/* Analysis Results */
+.analysis-results {
+  width: 100%;
+  padding: 24px;
+  background: white;
+  border-radius: 8px;
+  box-sizing: border-box;
 }
 
-.features-section h3 {
-  color: #333;
-  margin: 0 0 16px 0;
+.results-header {
   font-size: 18px;
   font-weight: 600;
+  color: #111827;
+  margin-bottom: 24px;
+  text-align: left;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  text-align: left;
+}
+
+.result-item {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.result-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B7280;
+}
+
+.result-value {
+  font-size: 14px;
+  font-weight: 400;
+  color: #111827;
+}
+
+.key-features {
+  margin-top: 24px;
+  text-align: left;
+}
+
+.key-features-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B7280;
+  margin-bottom: 12px;
 }
 
 .features-list {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  list-style: none;
-  padding: 0;
-  margin: 0;
 }
 
 .feature-tag {
-  background: #0066cc;
-  color: white;
-  padding: 6px 12px;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: #EFF6FF;
   border-radius: 16px;
   font-size: 14px;
   font-weight: 500;
-}
-
-.loading-spinner {
-  color: #666;
-  text-align: center;
-  padding: 40px 0;
-}
-
-.error-message {
-  color: #d32f2f;
-  background: #ffebee;
-  padding: 16px;
-  border-radius: 4px;
-  margin-top: 8px;
-}
-
-.no-features {
-  color: #666;
-  font-style: italic;
-}
-
-.analysis-loading {
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  color: #6B7280;
-  text-align: center;
-  margin-top: 16px;
-}
-
-.analysis-results {
-  width: 100%;
-  max-width: 800px;
-  margin-top: 24px;
+  color: #2563EB;
 }
 
 .analysis-header {
@@ -245,20 +302,102 @@
   white-space: nowrap;
 }
 
-.results-container {
-  width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 1.5rem;
+.boat-analysis-container {
   background: white;
   border-radius: 8px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  padding: 24px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin: 20px 0;
+  max-width: 600px;
+  width: 100%;
 }
 
-.results-content {
+.boat-analysis-container h2 {
+  color: #333;
+  margin: 0 0 20px 0;
+  font-size: 24px;
+  font-weight: 600;
+}
+
+.analysis-section {
+  margin-bottom: 24px;
+}
+
+.analysis-item {
   display: flex;
-  gap: 2rem;
-  margin-bottom: 1.5rem;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 0;
+  border-bottom: 1px solid #ddd;
+}
+
+.analysis-item:last-child {
+  border-bottom: none;
+}
+
+.label {
+  color: #666;
+  font-weight: 500;
+  flex: 1;
+}
+
+.value {
+  color: #333;
+  font-weight: 600;
+  flex: 2;
+  text-align: right;
+}
+
+.features-section h3 {
+  color: #333;
+  margin: 0 0 16px 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.features-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.feature-tag {
+  background: #0066cc;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.loading-spinner {
+  color: #666;
+  text-align: center;
+  padding: 40px 0;
+}
+
+.error-message {
+  color: #d32f2f;
+  background: #ffebee;
+  padding: 16px;
+  border-radius: 4px;
+  margin-top: 8px;
+}
+
+.no-features {
+  color: #666;
+  font-style: italic;
+}
+
+.analysis-loading {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #6B7280;
+  text-align: center;
+  margin-top: 16px;
 }
 
 .boat-image {
@@ -338,30 +477,4 @@
   border-radius: 16px;
   font-size: 0.875rem;
   font-weight: 400;
-}
-
-.new-search-button {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.5rem;
-  background: #2563EB;
-  color: white;
-  border: none;
-  padding: 0.625rem;
-  border-radius: 6px;
-  font-size: 0.875rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.new-search-button:hover {
-  background: #1D4ED8;
-}
-
-.new-search-button svg {
-  width: 16px;
-  height: 16px;
 }

@@ -81,22 +81,22 @@ const ImageAnalysis = () => {
         break;
       case 50:
         setAnalysisProgress(50);
-        setAnalysisMessage('Analyzing boat characteristics...');
+        setAnalysisMessage('Identifying boat characteristics...');
         simulateProgress(50, 70, 8000);
         break;
       case 75:
         setAnalysisProgress(75);
-        setAnalysisMessage('Identifying boat details...');
+        setAnalysisMessage('Finalizing analysis...');
         simulateProgress(75, 85, 2000);
         break;
       case 85:
         setAnalysisProgress(85);
-        setAnalysisMessage('Finalizing analysis...');
+        setAnalysisMessage('Almost done...');
         simulateProgress(85, 95, 2000);
         break;
       case 95:
         setAnalysisProgress(95);
-        setAnalysisMessage('Almost done...');
+        setAnalysisMessage('Completing analysis...');
         simulateProgress(95, 98, 1000);
         break;
       default:

@@ -7,8 +7,10 @@ class GoogleVisionService {
     this.apiEndpoint = 'https://vision.googleapis.com/v1/images:annotate';
   }
 
-  async searchSimilarImages(base64Image) {
+  async searchSimilarImages(base64Image, onProgress) {
     try {
+      onProgress?.(0, 'Starting Google Vision analysis...');
+      
       if (!base64Image) {
         throw new Error('No image data provided');
       }
@@ -37,11 +39,12 @@ class GoogleVisionService {
         }]
       };
 
-      console.log('Making Vision API request...', {
+      console.log('Google Vision: Initiating API request', {
         endpoint: this.apiEndpoint,
-        keyLength: this.apiKey.length,
-        imageDataLength: imageData.length
+        requestSize: Math.round(imageData.length / 1024) + 'KB'
       });
+
+      onProgress?.(20, 'Sending request to Google Vision...');
 
       const response = await fetch(`${this.apiEndpoint}?key=${this.apiKey}`, {
         method: 'POST',
@@ -52,29 +55,36 @@ class GoogleVisionService {
         body: JSON.stringify(requestBody)
       });
 
-      const responseData = await response.text();
-      console.log('Vision API raw response:', responseData);
-
       if (!response.ok) {
-        throw new Error(`Google Vision API error (${response.status}): ${responseData}`);
+        const errorData = await response.json();
+        console.error('Google Vision: API request failed', {
+          status: response.status,
+          error: errorData
+        });
+        throw new Error(`Vision API request failed: ${response.status}`);
       }
 
-      let result;
-      try {
-        result = JSON.parse(responseData);
-      } catch (e) {
-        throw new Error('Invalid JSON response from Vision API');
-      }
-
-      if (!result.responses || !result.responses[0]) {
+      const data = await response.json();
+      
+      if (!data.responses?.[0]) {
+        console.error('Google Vision: Empty response received');
         throw new Error('Empty response from Vision API');
       }
 
-      if (result.responses[0].error) {
-        throw new Error(`Vision API error: ${result.responses[0].error.message}`);
+      const webDetection = data.responses[0].webDetection;
+      
+      if (!webDetection) {
+        console.error('Google Vision: No web detection results');
+        throw new Error('No web detection results found');
       }
 
-      const webDetection = result.responses[0].webDetection || {};
+      console.log('Google Vision: Analysis complete', {
+        bestGuessLabels: webDetection.bestGuessLabels?.length || 0,
+        webEntities: webDetection.webEntities?.length || 0,
+        visuallySimilarImages: webDetection.visuallySimilarImages?.length || 0
+      });
+
+      onProgress?.(40, 'Processing Google Vision results...');
 
       // Get visually similar images
       const similarImages = webDetection.visuallySimilarImages || [];
@@ -113,7 +123,7 @@ class GoogleVisionService {
       return boatResults;
 
     } catch (error) {
-      console.error('Error in Google Vision search:', error);
+      console.error('Google Vision: Error during analysis', error);
       throw error;
     }
   }
