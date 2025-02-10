@@ -31,12 +31,24 @@ export async function analyzeBoatImage(base64Image, onProgress) {
         content: [
           {
             type: "text",
-            text: `Analyze this boat image and provide the following information:
-1. Detected boat type (e.g., Pontoon, Sport Fishing, Motor Yacht)
-2. Engine type if visible
-3. Estimated size
-4. Key visible features (list 3-5 key features)
-5. Style characteristics (e.g., Luxury, Sport, Family)
+            text: `Analyze this boat image and provide a detailed classification in the following format:
+
+1. **Detected Boat Type** (e.g., Bass Boat, Pontoon, Sport Fishing, Motor Yacht)
+2. **Engine Type** if visible
+3. **Estimated Size** in feet
+4. **Key Features** (list 3-5 key visible features)
+5. **Style Analysis**:
+   First paragraph: Describe the boat's classification and primary purpose. For example: "This Bass Boat is specifically designed for freshwater fishing, particularly targeting bass and other panfish species."
+   
+   Second paragraph: Describe the boat's key design characteristics and how they serve its purpose. For example: "It features a low, sleek profile for easy navigation in shallow waters and provides anglers with ample casting space."
+   
+   Key Features of Its Style:
+   • Purpose & Use: Describe main activities and target user
+   • Design & Layout: Describe how the design serves its purpose
+   • Performance: Describe propulsion and handling characteristics
+   • Capacity & Features: Describe key amenities and capacity
+   
+   End with ideal conditions and typical use case.
 
 Additional context from similar boats:
 ${webResultsText}`
@@ -53,7 +65,7 @@ ${webResultsText}`
 
     console.log('OpenAI: Starting image analysis', {
       model: 'gpt-4o',
-      maxTokens: 500,
+      maxTokens: 800,
       temperature: 0.5,
       hasWebResults: !!webResultsText.trim()
     });
@@ -61,47 +73,98 @@ ${webResultsText}`
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages,
-      max_tokens: 500,
+      max_tokens: 800,
       temperature: 0.5
     });
 
     onProgress?.(75, 'Processing OpenAI response...');
 
-    if (!response.choices || !response.choices[0] || !response.choices[0].message) {
-      console.error('OpenAI: Invalid response structure', response);
-      throw new Error('Invalid response from OpenAI');
-    }
-
     const analysis = response.choices[0].message.content;
-    console.log('OpenAI: Analysis complete');
-
-    // Parse the analysis text, accounting for markdown formatting
+    
+    // Extract basic information
     const detectedType = analysis.match(/1\.\s*\*\*Detected Boat Type\*\*:\s*([^\n]+)/)?.[1]?.trim() || 'Not detected';
     const engineType = analysis.match(/2\.\s*\*\*Engine Type\*\*:\s*([^\n]+)/)?.[1]?.trim() || 'Not detected';
     const sizeMatch = analysis.match(/3\.\s*\*\*Estimated Size\*\*:\s*([^\n]+)/)?.[1]?.trim() || '';
     const estimatedSize = sizeMatch.match(/(\d+(?:-\d+)?\s*feet)/i)?.[1] || 'Not detected';
 
-    // Extract features (items after "4.")
-    const featuresMatch = analysis.match(/4\.\s*\*\*Key Visible Features\*\*:\s*([\s\S]*?)(?=5\.)/);
+    // Extract features
+    const featuresMatch = analysis.match(/4\.\s*\*\*Key Features\*\*:\s*([\s\S]*?)(?=5\.)/);
     const keyFeatures = featuresMatch
       ? featuresMatch[1]
           .split('\n')
           .map(f => f.trim())
-          .filter(f => f && !f.includes('Key Visible Features'))
-          .map(f => f.replace(/^\s*-\s*/, '').trim()) // Remove leading dash and trim
-          .filter(f => f) // Remove empty strings
+          .filter(f => f && !f.includes('Key Features'))
+          .map(f => f.replace(/^\s*[-•]\s*/, '').trim())
+          .filter(f => f)
       : [];
 
-    // Extract style (items after "5.")
-    const styleMatch = analysis.match(/5\.\s*\*\*Style Characteristics\*\*:\s*([\s\S]*?)(?=\n\n|$)/);
-    const styleCharacteristics = styleMatch
-      ? styleMatch[1]
-          .split('\n')
-          .map(s => s.trim())
-          .filter(s => s && !s.includes('Style Characteristics'))
-          .map(s => s.replace(/^\s*-\s*/, '').trim()) // Remove leading dash and trim
-          .filter(s => s) // Remove empty strings
-      : [];
+    // Extract style information
+    const styleMatch = analysis.match(/5\.\s*\*\*Style Analysis\*\*:\s*([\s\S]*?)(?=\n\n|$)/);
+    const styleText = styleMatch ? styleMatch[1] : '';
+    
+    // Process style sections
+    const styleDetails = [];
+    
+    // Extract main paragraphs
+    const paragraphs = styleText.split('\n\n').filter(p => p.trim());
+    
+    if (paragraphs[0]) {
+      styleDetails.push({
+        category: 'Overview',
+        content: paragraphs[0].trim()
+      });
+    }
+    
+    if (paragraphs[1]) {
+      styleDetails.push({
+        category: 'Design Characteristics',
+        content: paragraphs[1].trim()
+      });
+    }
+
+    // Extract key features
+    const keyFeaturesMatch = styleText.match(/Key Features of Its Style:([\s\S]*?)(?=End with|$)/i);
+    if (keyFeaturesMatch) {
+      const features = keyFeaturesMatch[1].trim().split('\n')
+        .map(line => line.trim())
+        .filter(line => line.startsWith('•'))
+        .map(line => {
+          const [type, desc] = line.substring(1).split(':').map(s => s.trim());
+          if (desc) {
+            return { type, desc };
+          }
+          return null;
+        })
+        .filter(f => f);
+      
+      features.forEach(({ type, desc }) => {
+        styleDetails.push({
+          category: type,
+          content: desc
+        });
+      });
+    }
+
+    // Extract conditions and use case
+    const conditionsMatch = styleText.match(/(?:End with|This boat is best suited for)[^.]+\./);
+    if (conditionsMatch) {
+      styleDetails.push({
+        category: 'Ideal Conditions',
+        content: conditionsMatch[0].replace(/^(?:End with|This boat is best suited for)\s*/, '').trim()
+      });
+    }
+
+    // Extract style tags
+    const styleTags = [];
+    const lowerText = styleText.toLowerCase();
+    if (lowerText.includes('fishing') || lowerText.includes('angler')) styleTags.push('Fishing');
+    if (lowerText.includes('family')) styleTags.push('Family');
+    if (lowerText.includes('recreational')) styleTags.push('Recreational');
+    if (lowerText.includes('luxury')) styleTags.push('Luxury');
+    if (lowerText.includes('performance')) styleTags.push('Performance');
+    if (lowerText.includes('sport')) styleTags.push('Sport');
+    if (lowerText.includes('offshore')) styleTags.push('Offshore');
+    if (lowerText.includes('bass')) styleTags.push('Bass');
 
     onProgress?.(100, 'Analysis complete');
 
@@ -110,7 +173,8 @@ ${webResultsText}`
       engineType,
       estimatedSize,
       keyFeatures,
-      styleCharacteristics,
+      styleTags,
+      styleDetails,
       similarBoats: boatInfos
     };
 
@@ -145,7 +209,7 @@ Focus on:
     console.log('OpenAI: Starting boat comparison');
 
     const response = await openai.chat.completions.create({
-      model: "gpt-4",
+      model: "gpt-4o",
       messages,
       max_tokens: 500,
       temperature: 0.5

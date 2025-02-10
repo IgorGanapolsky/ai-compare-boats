@@ -31,7 +31,8 @@ const BoatAnalysisResults = ({ analysisResults, onNewSearch, isLoading }) => {
     engineType = 'Not detected',
     estimatedSize = 'Not detected',
     keyFeatures = [],
-    style = []
+    styleTags = [],
+    styleDetails = []
   } = analysisResults;
 
   return (
@@ -63,10 +64,22 @@ const BoatAnalysisResults = ({ analysisResults, onNewSearch, isLoading }) => {
       <div className="style-section">
         <div className="info-label">Style</div>
         <div className="style-tags">
-          {style.map((item, index) => (
+          {styleTags.map((style, index) => (
             <span key={index} className="style-tag">
-              {item}
+              {style}
             </span>
+          ))}
+        </div>
+        <div className="style-details">
+          {styleDetails.map((detail, index) => (
+            <div key={index} className="style-category">
+              <div className="style-category-header">
+                {detail.category}
+              </div>
+              <div className="style-category-content">
+                {detail.content}
+              </div>
+            </div>
           ))}
         </div>
       </div>
