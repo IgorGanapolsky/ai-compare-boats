@@ -1,6 +1,4 @@
 import OpenAI from 'openai';
-import { googleVisionService } from './googleVisionService';
-import { webContentService } from './webContentService';
 
 const openai = new OpenAI({
   apiKey: process.env.REACT_APP_OPENAI_API_KEY,
@@ -8,22 +6,17 @@ const openai = new OpenAI({
 });
 
 export async function analyzeBoatImage(base64Image, onProgress) {
+  console.group('🚤 Boat Image Analysis');
   try {
-    onProgress?.(10, 'Preparing image analysis...');
-
-    // Get vision results
-    const visionResults = await googleVisionService.searchSimilarImages(base64Image, onProgress);
-
-    // Extract and format boat information from Vision results
-    const boatInfos = webContentService.extractBoatInfoFromVisionResults(visionResults);
-    const webResultsText = webContentService.formatBoatInfoForPrompt(boatInfos);
+    console.log('Starting analysis process...');
+    onProgress?.(25, 'Starting image analysis...');
 
     // Format base64 for OpenAI API
     const formattedBase64 = base64Image.startsWith('data:')
       ? base64Image
       : `data:image/jpeg;base64,${base64Image}`;
-
-    onProgress?.(50, 'Starting OpenAI analysis...');
+    
+    console.log('Image prepared for OpenAI API');
 
     const messages = [
       {
@@ -31,27 +24,34 @@ export async function analyzeBoatImage(base64Image, onProgress) {
         content: [
           {
             type: "text",
-            text: `Analyze this boat image and provide a detailed classification in the following format:
+            text: `Analyze this boat image and provide a detailed classification. Pay special attention to distinguishing between different types of fishing boats. For example:
+- Bass Boats: Specialized for bass fishing, featuring raised casting decks, storage for rods, livewells
+- Jon Boats: Simple flat-bottom utility boats, typically without raised decks
+- Center Console: Fishing boats with the helm in the center
+- Sport Fishing: Larger offshore fishing vessels
 
-1. **Detected Boat Type** (e.g., Bass Boat, Pontoon, Sport Fishing, Motor Yacht)
-2. **Engine Type** if visible
-3. **Estimated Size** in feet
-4. **Key Features** (list 3-5 key visible features)
+Format your response as follows:
+
+1. **Detected Boat Type** (be very specific, e.g., "Bass Boat" if you see raised casting decks, pedestal seats, and other bass fishing features)
+2. **Engine Type** (describe the visible propulsion system)
+3. **Estimated Size** (in feet)
+4. **Key Features** (list 3-5 key visible features, focusing on fishing-specific equipment like:
+   - Casting decks
+   - Rod storage/holders
+   - Trolling motors
+   - Livewells
+   - Navigation electronics)
+
 5. **Style Analysis**:
-   First paragraph: Describe the boat's classification and primary purpose. For example: "This Bass Boat is specifically designed for freshwater fishing, particularly targeting bass and other panfish species."
-   
-   Second paragraph: Describe the boat's key design characteristics and how they serve its purpose. For example: "It features a low, sleek profile for easy navigation in shallow waters and provides anglers with ample casting space."
-   
-   Key Features of Its Style:
-   • Purpose & Use: Describe main activities and target user
-   • Design & Layout: Describe how the design serves its purpose
-   • Performance: Describe propulsion and handling characteristics
-   • Capacity & Features: Describe key amenities and capacity
-   
-   End with ideal conditions and typical use case.
+   First paragraph: Describe the boat's specific purpose and target use case. For example: "This Bass Boat is specifically designed for freshwater fishing, particularly targeting bass and other panfish species. It is optimized for stability and maneuverability in shallow waters, making it ideal for anglers who need to navigate narrow channels and reach secluded fishing spots."
 
-Additional context from similar boats:
-${webResultsText}`
+   Key Features of Its Style:
+   • Purpose & Use: Focus on specific activities (bass fishing, general fishing, etc.)
+   • Design & Layout: How do specific design elements (raised decks, storage, seating) support its primary purpose?
+   • Equipment & Accessories: Notable fishing-specific equipment (trolling motors, fish finders, rod holders)
+   • Performance Features: Propulsion, handling, and performance characteristics
+
+Look carefully at the design elements that distinguish this type of boat - especially the deck layout, seating arrangement, and specialized fishing equipment.`
           },
           {
             type: "image_url",
@@ -63,29 +63,39 @@ ${webResultsText}`
       }
     ];
 
-    console.log('OpenAI: Starting image analysis', {
+    console.log('Sending request to OpenAI:', {
       model: 'gpt-4o',
       maxTokens: 800,
-      temperature: 0.5,
-      hasWebResults: !!webResultsText.trim()
+      temperature: 0.2,
+      messageLength: messages[0].content[0].text.length
     });
+
+    onProgress?.(50, 'Processing with GPT-4o...');
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages,
       max_tokens: 800,
-      temperature: 0.5
+      temperature: 0.2
     });
 
-    onProgress?.(75, 'Processing OpenAI response...');
+    console.log('Received response from OpenAI');
 
     const analysis = response.choices[0].message.content;
+    console.log('Raw analysis:', analysis);
     
     // Extract basic information
+    console.group('Extracting Information');
+    
     const detectedType = analysis.match(/1\.\s*\*\*Detected Boat Type\*\*:\s*([^\n]+)/)?.[1]?.trim() || 'Not detected';
+    console.log('Detected Type:', detectedType);
+    
     const engineType = analysis.match(/2\.\s*\*\*Engine Type\*\*:\s*([^\n]+)/)?.[1]?.trim() || 'Not detected';
+    console.log('Engine Type:', engineType);
+    
     const sizeMatch = analysis.match(/3\.\s*\*\*Estimated Size\*\*:\s*([^\n]+)/)?.[1]?.trim() || '';
     const estimatedSize = sizeMatch.match(/(\d+(?:-\d+)?\s*feet)/i)?.[1] || 'Not detected';
+    console.log('Estimated Size:', estimatedSize);
 
     // Extract features
     const featuresMatch = analysis.match(/4\.\s*\*\*Key Features\*\*:\s*([\s\S]*?)(?=5\.)/);
@@ -97,95 +107,92 @@ ${webResultsText}`
           .map(f => f.replace(/^\s*[-•]\s*/, '').trim())
           .filter(f => f)
       : [];
+    console.log('Key Features:', keyFeatures);
 
     // Extract style information
     const styleMatch = analysis.match(/5\.\s*\*\*Style Analysis\*\*:\s*([\s\S]*?)(?=\n\n|$)/);
     const styleText = styleMatch ? styleMatch[1] : '';
+    console.log('Style Text:', styleText);
     
     // Process style sections
+    console.group('Processing Style Sections');
     const styleDetails = [];
     
-    // Extract main paragraphs
-    const paragraphs = styleText.split('\n\n').filter(p => p.trim());
-    
-    if (paragraphs[0]) {
-      styleDetails.push({
+    // Extract main description
+    const mainDescMatch = styleText.match(/^([^•]+)/);
+    if (mainDescMatch) {
+      const overview = {
         category: 'Overview',
-        content: paragraphs[0].trim()
-      });
-    }
-    
-    if (paragraphs[1]) {
-      styleDetails.push({
-        category: 'Design Characteristics',
-        content: paragraphs[1].trim()
-      });
+        content: mainDescMatch[1].trim()
+      };
+      console.log('Overview:', overview);
+      styleDetails.push(overview);
     }
 
     // Extract key features
-    const keyFeaturesMatch = styleText.match(/Key Features of Its Style:([\s\S]*?)(?=End with|$)/i);
-    if (keyFeaturesMatch) {
-      const features = keyFeaturesMatch[1].trim().split('\n')
-        .map(line => line.trim())
-        .filter(line => line.startsWith('•'))
-        .map(line => {
-          const [type, desc] = line.substring(1).split(':').map(s => s.trim());
-          if (desc) {
-            return { type, desc };
-          }
-          return null;
-        })
-        .filter(f => f);
-      
-      features.forEach(({ type, desc }) => {
-        styleDetails.push({
-          category: type,
-          content: desc
-        });
-      });
+    const featureMatches = styleText.matchAll(/•\s*([^:]+):\s*([^•]+)/g);
+    for (const match of featureMatches) {
+      const [_, category, content] = match;
+      const feature = {
+        category: category.trim(),
+        content: content.trim()
+      };
+      console.log('Style Feature:', feature);
+      styleDetails.push(feature);
     }
-
-    // Extract conditions and use case
-    const conditionsMatch = styleText.match(/(?:End with|This boat is best suited for)[^.]+\./);
-    if (conditionsMatch) {
-      styleDetails.push({
-        category: 'Ideal Conditions',
-        content: conditionsMatch[0].replace(/^(?:End with|This boat is best suited for)\s*/, '').trim()
-      });
-    }
+    console.groupEnd();
 
     // Extract style tags
+    console.group('Processing Style Tags');
     const styleTags = [];
     const lowerText = styleText.toLowerCase();
-    if (lowerText.includes('fishing') || lowerText.includes('angler')) styleTags.push('Fishing');
-    if (lowerText.includes('family')) styleTags.push('Family');
-    if (lowerText.includes('recreational')) styleTags.push('Recreational');
-    if (lowerText.includes('luxury')) styleTags.push('Luxury');
-    if (lowerText.includes('performance')) styleTags.push('Performance');
-    if (lowerText.includes('sport')) styleTags.push('Sport');
-    if (lowerText.includes('offshore')) styleTags.push('Offshore');
-    if (lowerText.includes('bass')) styleTags.push('Bass');
+    
+    const tagChecks = [
+      { tag: 'Bass', conditions: [() => lowerText.includes('bass'), () => detectedType.toLowerCase().includes('bass')] },
+      { tag: 'Fishing', conditions: [() => lowerText.includes('fishing'), () => lowerText.includes('angler')] },
+      { tag: 'Family', conditions: [() => lowerText.includes('family')] },
+      { tag: 'Recreational', conditions: [() => lowerText.includes('recreational')] },
+      { tag: 'Sport', conditions: [() => lowerText.includes('sport')] }
+    ];
+
+    tagChecks.forEach(({ tag, conditions }) => {
+      if (conditions.some(check => check())) {
+        styleTags.push(tag);
+        console.log(`Added tag: ${tag}`);
+      }
+    });
+    
+    console.log('Final Style Tags:', styleTags);
+    console.groupEnd();
+    console.groupEnd();
 
     onProgress?.(100, 'Analysis complete');
 
-    return {
+    const result = {
       detectedType,
       engineType,
       estimatedSize,
       keyFeatures,
       styleTags,
-      styleDetails,
-      similarBoats: boatInfos
+      styleDetails
     };
 
+    console.log('Final Analysis Result:', result);
+    console.groupEnd();
+    return result;
+
   } catch (error) {
-    console.error('OpenAI: Error during analysis', error);
+    console.error('❌ Error in analyzeBoatImage:', error);
+    console.groupEnd();
     throw error;
   }
 }
 
 export async function compareBoats(boat1, boat2) {
   try {
+    console.group('🚣‍♂️ Boat Comparison');
+    console.log('Starting boat comparison...');
+
     const messages = [
       {
         role: "user",
@@ -206,6 +213,13 @@ Focus on:
       }
     ];
 
+    console.log('Sending request to OpenAI:', {
+      model: 'gpt-4o',
+      maxTokens: 500,
+      temperature: 0.5,
+      messageLength: messages[0].content.length
+    });
+
     console.log('OpenAI: Starting boat comparison');
 
     const response = await openai.chat.completions.create({
@@ -215,16 +229,21 @@ Focus on:
       temperature: 0.5
     });
 
+    console.log('Received response from OpenAI');
+
     if (!response.choices?.[0]?.message?.content) {
       console.error('OpenAI: Invalid comparison response');
       throw new Error('Invalid response from OpenAI comparison');
     }
 
     console.log('OpenAI: Comparison complete');
-    return response.choices[0].message.content;
+    const result = response.choices[0].message.content;
+    console.log('Comparison Result:', result);
+    console.groupEnd();
+    return result;
 
   } catch (error) {
-    console.error('OpenAI: Error during comparison', error);
+    console.error('❌ Error during comparison', error);
     throw error;
   }
 }
