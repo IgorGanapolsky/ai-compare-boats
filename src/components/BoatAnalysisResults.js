@@ -1,74 +1,71 @@
 import React from 'react';
 import './BoatAnalysisResults.css';
 
-const BoatAnalysisResults = ({ results, onReset }) => {
-  if (!results) {
-    return null;
-  }
-
+const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
   const {
-    detectedType = 'Not detected',
-    engineType = 'Not detected',
-    estimatedSize = 'Not detected',
+    detectedType,
+    engineType,
+    estimatedSize,
     keyFeatures = [],
-    styleTags = [],
-    styleDetails = []
+    style = [],
+    overview
   } = results;
 
   return (
-    <div className="results-content">
-      <h2 className="section-title">Uploaded Boat</h2>
-
-      <div className="info-grid">
-        <div className="info-label">Detected Type</div>
-        <div className="info-value">{detectedType}</div>
-
-        <div className="info-label">Engine Type</div>
-        <div className="info-value">{engineType}</div>
-
-        <div className="info-label">Estimated Size</div>
-        <div className="info-value">{estimatedSize}</div>
-      </div>
-
-      <div className="features-section">
-        <div className="info-label">Key Features</div>
-        <div className="features-list">
-          {keyFeatures.map((feature, index) => (
-            <span key={index} className="feature-tag">
-              {feature}
-            </span>
-          ))}
+    <div className="boat-analysis-results">
+      <div className="results-content">
+        <div className="boat-image">
+          <img src={imagePreview} alt="Analyzed boat" />
+          <button className="new-search-button" onClick={onReset}>
+            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M16.6667 10.0001C16.6667 13.6834 13.6834 16.6667 10 16.6667C6.31669 16.6667 3.33335 13.6834 3.33335 10.0001C3.33335 6.31674 6.31669 3.33341 10 3.33341M10 3.33341L13.3334 6.66674M10 3.33341L6.66669 6.66674" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            New Search
+          </button>
         </div>
-      </div>
-
-      <div className="style-section">
-        <div className="info-label">Style</div>
-        <div className="style-tags">
-          {styleTags.map((style, index) => (
-            <span key={index} className="style-tag">
-              {style}
-            </span>
-          ))}
-        </div>
-      </div>
-
-      {styleDetails.length > 0 && (
-        <div className="style-details">
-          <div className="info-label">Style Details</div>
-          <div className="style-details-list">
-            {styleDetails.map((detail, index) => (
-              <div key={index} className="style-detail-item">
-                <div className="style-detail-category">{detail.category}</div>
-                <div className="style-detail-content">{detail.content}</div>
-              </div>
-            ))}
+        
+        <div className="boat-details">
+          <div className="details-header">
+            <h2>Uploaded Boat</h2>
+            <div className="processing-badge">Processing...</div>
           </div>
-        </div>
-      )}
 
-      <button className="reset-button" onClick={onReset}>
-        Analyze Another Boat
-      </button>
+          <div className="details-grid">
+            <div className="detail-item">
+              <label>Detected Type</label>
+              <span>{detectedType}</span>
+            </div>
+            {estimatedSize && (
+              <div className="detail-item">
+                <label>Estimated Size</label>
+                <span>{estimatedSize}</span>
+              </div>
+            )}
+          </div>
+
+          {keyFeatures && keyFeatures.length > 0 && (
+            <div className="detail-section">
+              <label>Key Features</label>
+              <div className="tags-container">
+                {keyFeatures.map((feature, index) => (
+                  <span key={index} className="feature-tag">{feature}</span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {style && style.length > 0 && (
+            <div className="detail-section">
+              <label>Style</label>
+              <div className="tags-container">
+                {style.map((item, index) => (
+                  <span key={index} className="style-tag">{item}</span>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   );
 };

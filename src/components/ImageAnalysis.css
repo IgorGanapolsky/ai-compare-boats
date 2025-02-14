@@ -2,11 +2,9 @@
 .image-analysis {
   display: flex;
   flex-direction: column;
-  align-items: center;
   width: 100%;
-  min-height: calc(100vh - 64px); /* Full height minus navbar */
+  min-height: calc(100vh - 64px);
   background-color: #E5E7EB;
-  padding: 0;
 }
 
 .image-analysis h1 {
@@ -27,20 +25,22 @@
   text-align: center;
   margin: 0 0 40px 0;
   max-width: 460px;
+  align-self: center;
 }
 
 .upload-container,
 .analysis-container,
 .results-container {
   width: 100%;
-  max-width: 600px;
-  margin: 0 auto;
-  padding: 0 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FFFFFF;
 }
 
 .upload-zone {
   width: 100%;
-  height: 100%;
+  max-width: 800px;
   min-height: 240px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -49,8 +49,9 @@
   justify-content: center;
   background: #FFFFFF;
   border: 1px dashed #D1D5DB;
-  border-radius: 8px;
+  border-radius: 12px;
   padding: 40px;
+  margin: 0 32px;
 }
 
 .upload-zone:hover,
@@ -210,24 +211,27 @@
   align-items: center;
   gap: 24px;
   width: 100%;
-  padding: 24px;
+  padding: 24px 32px;
   background: #FFFFFF;
   border-radius: 8px;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .image-preview {
   width: 100%;
-  max-width: 400px;
+  max-width: 480px;
   margin: 0 auto;
   border-radius: 8px;
   overflow: hidden;
+  background: #FFFFFF;
 }
 
 .image-preview img {
   width: 100%;
-  height: auto;
+  aspect-ratio: 16/9;
   display: block;
   border-radius: 8px;
+  object-fit: cover;
 }
 
 /* Analysis Results */

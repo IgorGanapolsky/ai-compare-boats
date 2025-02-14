@@ -185,7 +185,11 @@ const ImageAnalysis = () => {
             <ProgressIndicator progress={analysisProgress} message={analysisMessage} />
           </div>
         ) : analysisResults ? (
-          <BoatAnalysisResults results={analysisResults} onReset={handleReset} />
+          <BoatAnalysisResults 
+            results={analysisResults} 
+            imagePreview={imagePreview}
+            onReset={handleReset} 
+          />
         ) : (
           <div {...getRootProps()} className="upload-zone">
             <input {...getInputProps()} />
