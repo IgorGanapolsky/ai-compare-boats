@@ -14,10 +14,13 @@
   justify-content: space-between;
 }
 
-.logo {
-  font-size: 16px;
-  font-weight: 600;
-  color: #2563EB;
+.navbar .logo {
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 24.2px;
+  letter-spacing: 0;
+  color: #2563EB !important;
   text-decoration: none;
 }
 
