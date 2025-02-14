@@ -7,6 +7,7 @@ import './ImageAnalysis.css';
 
 const ImageAnalysis = () => {
   const [selectedImage, setSelectedImage] = useState(null);
+  const [imagePreview, setImagePreview] = useState(null);
   const [analysisResults, setAnalysisResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -96,6 +97,10 @@ const ImageAnalysis = () => {
       setAnalysisResults(null);
       setError(null);
       
+      // Create image preview
+      const imageUrl = URL.createObjectURL(file);
+      setImagePreview(imageUrl);
+      
       setAnalysisProgress(0);
       setAnalysisMessage('Preparing image...');
       simulateProgress(0, 10, 1000);
@@ -146,24 +151,39 @@ const ImageAnalysis = () => {
 
   const handleReset = () => {
     setSelectedImage(null);
+    setImagePreview(null);
     setAnalysisResults(null);
     setIsAnalyzing(false);
     setAnalysisProgress(0);
     setAnalysisMessage('');
     setError(null);
+    if (imagePreview) {
+      URL.revokeObjectURL(imagePreview);
+    }
   };
 
   return (
     <div className="image-analysis">
-      <h1>Find Similar Boats</h1>
-      <p className="description">
-        Upload a boat image and our AI will analyze it to find similar boats based on appearance,
-        specifications, and features
-      </p>
+      {!isAnalyzing && !analysisResults && (
+        <>
+          <h1>Find Similar Boats</h1>
+          <p className="description">
+            Upload a boat image and our AI will analyze it to find similar boats based on appearance,
+            specifications, and features
+          </p>
+        </>
+      )}
       
       <div className={isAnalyzing ? "analysis-container" : analysisResults ? "results-container" : "upload-container"}>
         {isAnalyzing ? (
-          <ProgressIndicator progress={analysisProgress} message={analysisMessage} />
+          <div className="analyzing-content">
+            {imagePreview && (
+              <div className="image-preview">
+                <img src={imagePreview} alt="Uploaded boat" />
+              </div>
+            )}
+            <ProgressIndicator progress={analysisProgress} message={analysisMessage} />
+          </div>
         ) : analysisResults ? (
           <BoatAnalysisResults results={analysisResults} onReset={handleReset} />
         ) : (
