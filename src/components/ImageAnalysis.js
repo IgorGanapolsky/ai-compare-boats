@@ -90,7 +90,7 @@ const ImageAnalysis = () => {
     });
   };
 
-  const analyzeImage = async (file) => {
+  const handleImageAnalysis = async (file) => {
     try {
       setIsAnalyzing(true);
       setAnalysisResults(null);
@@ -125,61 +125,72 @@ const ImageAnalysis = () => {
     }
   };
 
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
-    accept: {
-      'image/*': ['.jpeg', '.jpg', '.png']
-    },
-    maxFiles: 1,
-    onDrop: async (acceptedFiles) => {
-      if (acceptedFiles.length > 0) {
-        const file = acceptedFiles[0];
-        const imageUrl = URL.createObjectURL(file);
-        setSelectedImage(imageUrl);
-        await analyzeImage(file);
-      }
+  const onDrop = async (acceptedFiles) => {
+    if (acceptedFiles.length > 0) {
+      const file = acceptedFiles[0];
+      setSelectedImage(file);
+      handleImageAnalysis(file);
     }
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    onDrop,
+    accept: {
+      'image/jpeg': ['.jpg', '.jpeg'],
+      'image/png': ['.png'],
+      'image/webp': ['.webp']
+    },
+    maxSize: 10 * 1024 * 1024, // 10MB
+    multiple: false
   });
 
-  const handleNewSearch = () => {
-    if (selectedImage && selectedImage.startsWith('blob:')) {
-      URL.revokeObjectURL(selectedImage);
-    }
+  const handleReset = () => {
     setSelectedImage(null);
     setAnalysisResults(null);
+    setIsAnalyzing(false);
     setAnalysisProgress(0);
     setAnalysisMessage('');
-    setIsAnalyzing(false);
     setError(null);
   };
 
   return (
-    <div className="image-analysis-container">
-      <div {...getRootProps()} className={`dropzone ${isDragActive ? 'active' : ''}`}>
-        <input {...getInputProps()} />
-        {selectedImage ? (
-          <img src={selectedImage} alt="Selected boat" className="preview-image" />
+    <div className="image-analysis">
+      <h1>Find Similar Boats</h1>
+      <p className="description">
+        Upload a boat image and our AI will analyze it to find similar boats based on appearance,
+        specifications, and features
+      </p>
+      
+      <div className={isAnalyzing ? "analysis-container" : analysisResults ? "results-container" : "upload-container"}>
+        {isAnalyzing ? (
+          <ProgressIndicator progress={analysisProgress} message={analysisMessage} />
+        ) : analysisResults ? (
+          <BoatAnalysisResults results={analysisResults} onReset={handleReset} />
         ) : (
-          <p>Drag & drop a boat image here, or click to select one</p>
+          <div {...getRootProps()} className="upload-zone">
+            <input {...getInputProps()} />
+            <div className="upload-content">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M21 15V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V15M17 8L12 3M12 3L7 8M12 3V15" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              <div className="upload-text">
+                Drag and drop your boat image here or
+              </div>
+              <button className="browse-button">Browse Files</button>
+              <div className="supported-formats">
+                Supported formats: JPG, PNG, WEBP (max 10MB)
+              </div>
+            </div>
+          </div>
         )}
       </div>
-
-      {isAnalyzing && (
-        <ProgressIndicator 
-          progress={analysisProgress} 
-          message={analysisMessage}
-        />
-      )}
 
       {error && (
         <div className="error-message">
           {error}
+          <button onClick={handleReset}>Try Again</button>
         </div>
       )}
-
-      <BoatAnalysisResults 
-        analysisResults={analysisResults}
-        onNewSearch={handleNewSearch}
-      />
     </div>
   );
 };

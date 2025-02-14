@@ -575,3 +575,104 @@
   font-size: 0.875rem;
   font-weight: 400;
 }
+
+.results-content {
+  width: 100%;
+}
+
+.section-title {
+  font-family: 'Inter', sans-serif;
+  font-size: 20px;
+  font-weight: 600;
+  color: #111827;
+  margin: 0 0 24px 0;
+}
+
+.info-grid {
+  display: grid;
+  grid-template-columns: 120px 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.info-label {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #6B7280;
+}
+
+.info-value {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #111827;
+}
+
+.features-section,
+.style-section,
+.style-details {
+  margin-bottom: 32px;
+}
+
+.features-list,
+.style-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.feature-tag,
+.style-tag {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.style-details-list {
+  margin-top: 12px;
+}
+
+.style-detail-item {
+  margin-bottom: 16px;
+}
+
+.style-detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.style-detail-category {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  color: #111827;
+  margin-bottom: 4px;
+}
+
+.style-detail-content {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  color: #4B5563;
+  line-height: 1.5;
+}
+
+.reset-button {
+  width: 100%;
+  padding: 10px 0;
+  background: #2563EB;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.reset-button:hover {
+  background: #1D4ED8;
+}

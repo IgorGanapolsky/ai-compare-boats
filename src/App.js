@@ -1,13 +1,13 @@
 import React from 'react';
-import ImageAnalysis from './components/ImageAnalysis';
 import NavBar from './components/NavBar';
+import ImageAnalysis from './components/ImageAnalysis';
 import './App.css';
 
 function App() {
   return (
     <div className="App">
       <NavBar />
-      <main className="main-content">
+      <main>
         <ImageAnalysis />
       </main>
     </div>
