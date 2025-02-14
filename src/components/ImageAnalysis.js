@@ -1,151 +1,99 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { analyzeBoatImage } from '../services/openaiService';
 import BoatAnalysisResults from './BoatAnalysisResults';
-import ProgressIndicator from './ProgressIndicator';
 import './ImageAnalysis.css';
 
 const ImageAnalysis = () => {
   const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [analysisResults, setAnalysisResults] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisMessage, setAnalysisMessage] = useState('');
+  const [analysisResults, setAnalysisResults] = useState(null);
   const [error, setError] = useState(null);
-  const progressIntervalRef = useRef(null);
 
   const simulateProgress = (startProgress, endProgress, duration, stepSize = 2) => {
     let currentProgress = startProgress;
-    clearInterval(progressIntervalRef.current);
-    
-    progressIntervalRef.current = setInterval(() => {
+    const intervalId = setInterval(() => {
       if (currentProgress < endProgress) {
         currentProgress = Math.min(currentProgress + stepSize, endProgress);
         setAnalysisProgress(currentProgress);
       } else {
-        clearInterval(progressIntervalRef.current);
+        clearInterval(intervalId);
       }
     }, duration / ((endProgress - startProgress) / stepSize));
+    return intervalId;
   };
 
-  const handleProgressUpdate = (progress, message) => {
-    clearInterval(progressIntervalRef.current);
-    setAnalysisMessage(message);
+  const onDrop = useCallback(async (acceptedFiles) => {
+    if (acceptedFiles.length === 0) return;
 
-    switch (progress) {
-      case 20:
-        setAnalysisProgress(20);
-        setAnalysisMessage('Initializing image analysis...');
-        simulateProgress(20, 35, 5000);
-        break;
-      case 35:
-        setAnalysisProgress(35);
-        setAnalysisMessage('Processing image features...');
-        simulateProgress(35, 45, 2000);
-        break;
-      case 50:
-        setAnalysisProgress(50);
-        setAnalysisMessage('Identifying boat characteristics...');
-        simulateProgress(50, 70, 8000);
-        break;
-      case 75:
-        setAnalysisProgress(75);
-        setAnalysisMessage('Finalizing analysis...');
-        simulateProgress(75, 85, 2000);
-        break;
-      case 85:
-        setAnalysisProgress(85);
-        setAnalysisMessage('Almost done...');
-        simulateProgress(85, 95, 2000);
-        break;
-      case 95:
-        setAnalysisProgress(95);
-        setAnalysisMessage('Completing analysis...');
-        simulateProgress(95, 98, 1000);
-        break;
-      default:
-        setAnalysisProgress(progress);
+    const file = acceptedFiles[0];
+    if (file.size > 10 * 1024 * 1024) {
+      setError('File size exceeds 10MB limit');
+      return;
     }
-  };
 
-  const completeAnalysis = (results) => {
-    return new Promise(resolve => {
-      clearInterval(progressIntervalRef.current);
-      setAnalysisProgress(98);
-      setAnalysisMessage('Completing analysis...');
-      let currentProgress = 98;
-      
-      progressIntervalRef.current = setInterval(() => {
-        if (currentProgress < 100) {
-          currentProgress = Math.min(currentProgress + 0.5, 100);
-          setAnalysisProgress(currentProgress);
-          
-          if (currentProgress === 100) {
-            clearInterval(progressIntervalRef.current);
-            setAnalysisResults(results);
-            resolve();
-          }
-        }
-      }, 50);
-    });
-  };
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!validTypes.includes(file.type)) {
+      setError('Please upload a JPG, PNG, or WEBP file');
+      return;
+    }
 
-  const handleImageAnalysis = async (file) => {
+    setSelectedImage(file);
+    setImagePreview(URL.createObjectURL(file));
+    setIsAnalyzing(true);
+    setAnalysisMessage('Starting analysis...');
+    setAnalysisProgress(0);
+
     try {
-      setIsAnalyzing(true);
-      setAnalysisResults(null);
-      setError(null);
+      // Initial progress simulation
+      const initialProgressId = simulateProgress(0, 30, 1000);
+
+      // Simulate processing stages
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      clearInterval(initialProgressId);
+      setAnalysisMessage('Analyzing boat features...');
       
-      // Create image preview
-      const imageUrl = URL.createObjectURL(file);
-      setImagePreview(imageUrl);
+      const midProgressId = simulateProgress(30, 60, 1500);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      clearInterval(midProgressId);
       
-      setAnalysisProgress(0);
-      setAnalysisMessage('Preparing image...');
-      simulateProgress(0, 10, 1000);
-      
-      // Convert file to base64
-      const reader = new FileReader();
-      const base64Promise = new Promise((resolve, reject) => {
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = () => reject(new Error('Failed to read file'));
-        reader.readAsDataURL(file);
+      setAnalysisMessage('Identifying characteristics...');
+      const lateProgressId = simulateProgress(60, 85, 1500);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      clearInterval(lateProgressId);
+
+      // Call the API
+      const results = await analyzeBoatImage(file, (progress, message) => {
+        setAnalysisProgress(progress);
+        if (message) setAnalysisMessage(message);
       });
       
-      const base64Image = await base64Promise;
-      const results = await analyzeBoatImage(base64Image, handleProgressUpdate);
+      // Final progress
+      setAnalysisMessage('Completing analysis...');
+      const finalProgressId = simulateProgress(85, 100, 1000);
       
-      clearInterval(progressIntervalRef.current);
-      await completeAnalysis(results);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      clearInterval(finalProgressId);
       
+      setAnalysisResults(results);
+      setIsAnalyzing(false);
+
     } catch (err) {
-      console.error('Error analyzing image:', err);
       setError('Failed to analyze image. Please try again.');
-    } finally {
-      setTimeout(() => {
-        setIsAnalyzing(false);
-        setAnalysisMessage('');
-      }, 500);
+      setIsAnalyzing(false);
     }
-  };
+  }, []);
 
-  const onDrop = async (acceptedFiles) => {
-    if (acceptedFiles.length > 0) {
-      const file = acceptedFiles[0];
-      setSelectedImage(file);
-      handleImageAnalysis(file);
-    }
-  };
-
-  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+  const { getRootProps, getInputProps } = useDropzone({
     onDrop,
     accept: {
       'image/jpeg': ['.jpg', '.jpeg'],
       'image/png': ['.png'],
       'image/webp': ['.webp']
     },
-    maxSize: 10 * 1024 * 1024, // 10MB
     multiple: false
   });
 
@@ -157,41 +105,25 @@ const ImageAnalysis = () => {
     setAnalysisProgress(0);
     setAnalysisMessage('');
     setError(null);
-    if (imagePreview) {
-      URL.revokeObjectURL(imagePreview);
-    }
   };
 
   return (
     <div className="image-analysis">
-      {!isAnalyzing && !analysisResults && (
-        <>
-          <h1>Find Similar Boats</h1>
-          <p className="description">
-            Upload a boat image and our AI will analyze it to find similar boats based on appearance,
-            specifications, and features
-          </p>
-        </>
+      <h1>Find Similar Boats</h1>
+      <p className="description">
+        Upload a boat image and our AI will analyze its characteristics to find similar boats
+      </p>
+
+      {error && (
+        <div className="error-message">
+          <span>{error}</span>
+          <button onClick={() => setError(null)}>Dismiss</button>
+        </div>
       )}
       
       <div className={isAnalyzing ? "analysis-container" : analysisResults ? "results-container" : "upload-container"}>
-        {isAnalyzing ? (
-          <div className="analyzing-content">
-            {imagePreview && (
-              <div className="image-preview">
-                <img src={imagePreview} alt="Uploaded boat" />
-              </div>
-            )}
-            <ProgressIndicator progress={analysisProgress} message={analysisMessage} />
-          </div>
-        ) : analysisResults ? (
-          <BoatAnalysisResults 
-            results={analysisResults} 
-            imagePreview={imagePreview}
-            onReset={handleReset} 
-          />
-        ) : (
-          <div {...getRootProps()} className="upload-zone">
+        {!isAnalyzing && !analysisResults && (
+          <div {...getRootProps({ className: 'upload-zone' })}>
             <input {...getInputProps()} />
             <div className="upload-content">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -207,14 +139,36 @@ const ImageAnalysis = () => {
             </div>
           </div>
         )}
-      </div>
 
-      {error && (
-        <div className="error-message">
-          {error}
-          <button onClick={handleReset}>Try Again</button>
-        </div>
-      )}
+        {isAnalyzing && (
+          <div className="analyzing-content">
+            <div className="image-preview">
+              <img src={imagePreview} alt="Boat preview" />
+            </div>
+            <div className="progress-container">
+              <div className="progress-header">
+                <div className="progress-title">Analyzing Image</div>
+                <div className="progress-percentage">{Math.round(analysisProgress)}%</div>
+              </div>
+              <div className="progress-bar">
+                <div 
+                  className="progress" 
+                  style={{ width: `${analysisProgress}%` }}
+                ></div>
+              </div>
+              <div className="analysis-status">{analysisMessage}</div>
+            </div>
+          </div>
+        )}
+
+        {analysisResults && (
+          <BoatAnalysisResults 
+            results={analysisResults} 
+            imagePreview={imagePreview}
+            onReset={handleReset} 
+          />
+        )}
+      </div>
     </div>
   );
 };

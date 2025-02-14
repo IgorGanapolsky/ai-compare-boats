@@ -5,17 +5,24 @@ const openai = new OpenAI({
   dangerouslyAllowBrowser: true
 });
 
-export async function analyzeBoatImage(base64Image, onProgress) {
+if (!process.env.REACT_APP_OPENAI_API_KEY) {
+  throw new Error('OpenAI API key is not configured. Please add REACT_APP_OPENAI_API_KEY to your environment variables.');
+}
+
+export async function analyzeBoatImage(file, onProgress) {
   console.group('🚤 Boat Image Analysis');
   try {
     console.log('Starting analysis process...');
     onProgress?.(25, 'Starting image analysis...');
 
-    // Format base64 for OpenAI API
-    const formattedBase64 = base64Image.startsWith('data:')
-      ? base64Image
-      : `data:image/jpeg;base64,${base64Image}`;
-    
+    // Convert file to base64
+    const base64Image = await new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Failed to read file'));
+      reader.readAsDataURL(file);
+    });
+
     console.log('Image prepared for OpenAI API');
 
     const messages = [
@@ -56,7 +63,7 @@ Look carefully at the design elements that distinguish this type of boat - espec
           {
             type: "image_url",
             image_url: {
-              url: formattedBase64
+              url: base64Image
             }
           }
         ]
@@ -222,25 +229,35 @@ Focus on:
 
     console.log('OpenAI: Starting boat comparison');
 
-    const response = await openai.chat.completions.create({
-      model: "gpt-4o",
-      messages,
-      max_tokens: 500,
-      temperature: 0.5
-    });
+    try {
+      const response = await openai.chat.completions.create({
+        model: "gpt-4o",
+        messages,
+        max_tokens: 500,
+        temperature: 0.5
+      });
 
-    console.log('Received response from OpenAI');
+      console.log('Received response from OpenAI');
 
-    if (!response.choices?.[0]?.message?.content) {
-      console.error('OpenAI: Invalid comparison response');
-      throw new Error('Invalid response from OpenAI comparison');
+      if (!response.choices?.[0]?.message?.content) {
+        console.error('OpenAI: Invalid comparison response');
+        throw new Error('Invalid response from OpenAI comparison');
+      }
+
+      console.log('OpenAI: Comparison complete');
+      const result = response.choices[0].message.content;
+      console.log('Comparison Result:', result);
+      console.groupEnd();
+      return result;
+
+    } catch (error) {
+      console.error('OpenAI API Error:', error);
+      if (error.response?.status === 401) {
+        throw new Error('Invalid OpenAI API key. Please check your configuration.');
+      } else {
+        throw new Error('Failed to compare boats. Please try again.');
+      }
     }
-
-    console.log('OpenAI: Comparison complete');
-    const result = response.choices[0].message.content;
-    console.log('Comparison Result:', result);
-    console.groupEnd();
-    return result;
 
   } catch (error) {
     console.error('❌ Error during comparison', error);
