@@ -1,10 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useRef } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { modelService } from '../services/modelService';
 import { analyzeBoatImage } from '../services/openaiService';
-import { imageService } from '../services/imageService';
-import ProgressIndicator from './ProgressIndicator';
 import BoatAnalysisResults from './BoatAnalysisResults';
+import ProgressIndicator from './ProgressIndicator';
 import './ImageAnalysis.css';
 
 const ImageAnalysis = () => {
@@ -14,41 +12,7 @@ const ImageAnalysis = () => {
   const [analysisProgress, setAnalysisProgress] = useState(0);
   const [analysisMessage, setAnalysisMessage] = useState('');
   const [error, setError] = useState(null);
-  const [isOnline, setIsOnline] = useState(navigator.onLine);
-  const [isModelReady, setIsModelReady] = useState(false);
   const progressIntervalRef = useRef(null);
-
-  useEffect(() => {
-    const handleOnlineStatus = () => {
-      setIsOnline(navigator.onLine);
-    };
-    window.addEventListener('online', handleOnlineStatus);
-    window.addEventListener('offline', handleOnlineStatus);
-
-    // Initialize offline capabilities
-    const init = async () => {
-      try {
-        await modelService.initialize();
-        setIsModelReady(true);
-      } catch (err) {
-        console.error('Failed to initialize offline analysis:', err);
-      }
-    };
-    init();
-
-    return () => {
-      window.removeEventListener('online', handleOnlineStatus);
-      window.removeEventListener('offline', handleOnlineStatus);
-    };
-  }, []);
-
-  useEffect(() => {
-    return () => {
-      if (selectedImage && selectedImage.startsWith('blob:')) {
-        URL.revokeObjectURL(selectedImage);
-      }
-    };
-  }, [selectedImage]);
 
   const simulateProgress = (startProgress, endProgress, duration, stepSize = 2) => {
     let currentProgress = startProgress;
@@ -136,7 +100,15 @@ const ImageAnalysis = () => {
       setAnalysisMessage('Preparing image...');
       simulateProgress(0, 10, 1000);
       
-      const base64Image = await imageService.fileToBase64(file);
+      // Convert file to base64
+      const reader = new FileReader();
+      const base64Promise = new Promise((resolve, reject) => {
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(new Error('Failed to read file'));
+        reader.readAsDataURL(file);
+      });
+      
+      const base64Image = await base64Promise;
       const results = await analyzeBoatImage(base64Image, handleProgressUpdate);
       
       clearInterval(progressIntervalRef.current);
