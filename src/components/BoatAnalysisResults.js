@@ -1,27 +1,7 @@
 import React from 'react';
 import './BoatAnalysisResults.css';
 
-const BoatAnalysisResults = ({ analysisResults, onNewSearch, isLoading }) => {
-  // Show loading state
-  if (isLoading) {
-    return (
-      <div className="results-container">
-        <h2 className="section-title">Analyzing Boat</h2>
-        <div className="info-grid">
-          <div className="info-label">Detected Type</div>
-          <div className="info-value">Analyzing...</div>
-          
-          <div className="info-label">Engine Type</div>
-          <div className="info-value">Analyzing...</div>
-          
-          <div className="info-label">Estimated Size</div>
-          <div className="info-value">Analyzing...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // Don't show anything if no results
+const BoatAnalysisResults = ({ analysisResults, onNewSearch }) => {
   if (!analysisResults) {
     return null;
   }

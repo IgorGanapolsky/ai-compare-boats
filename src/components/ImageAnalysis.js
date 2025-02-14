@@ -178,7 +178,6 @@ const ImageAnalysis = () => {
 
       <BoatAnalysisResults 
         analysisResults={analysisResults}
-        isLoading={isAnalyzing}
         onNewSearch={handleNewSearch}
       />
     </div>

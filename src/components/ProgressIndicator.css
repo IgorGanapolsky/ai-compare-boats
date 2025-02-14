@@ -1,7 +1,9 @@
 .progress-container {
   width: 100%;
-  margin: 24px 0;
+  max-width: 800px;
+  margin: 24px auto;
   padding: 0 24px;
+  box-sizing: border-box;
 }
 
 .progress-content {
@@ -11,49 +13,48 @@
   border-radius: 8px;
 }
 
-.progress-message {
-  margin-top: 12px;
-  font-size: 14px;
-  color: #6B7280;
-  text-align: center;
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
 }
 
-.progress-message > span:first-child {
-  font-size: 14px;
-  font-weight: 600;
+.progress-title {
+  font-size: 16px;
+  font-weight: 500;
   color: #111827;
 }
 
 .progress-percentage {
-  font-size: 14px;
-  font-weight: 600;
+  font-size: 16px;
+  font-weight: 500;
   color: #2563EB;
 }
 
 .progress-bar {
   width: 100%;
-  height: 4px;
+  height: 8px;
   background: #E5E7EB;
-  border-radius: 2px;
+  border-radius: 4px;
   overflow: hidden;
   position: relative;
   margin: 0 24px;
   width: calc(100% - 48px);
 }
 
-.progress-bar-fill {
+.progress-fill {
   position: absolute;
   top: 0;
   left: 0;
   height: 100%;
   background: #2563EB;
-  transition: width 0.3s ease-in-out;
+  transition: width 0.3s ease;
 }
 
-.status-message {
-  margin-top: 12px;
+.progress-message {
+  margin-top: 8px;
   font-size: 14px;
-  font-weight: 400;
   color: #6B7280;
-  padding: 0 24px;
+  text-align: center;
 }
