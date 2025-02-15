@@ -13,16 +13,17 @@ const ImageAnalysis = () => {
   const [analysisResults, setAnalysisResults] = useState(null);
   const [error, setError] = useState(null);
 
-  const simulateProgress = (startProgress, endProgress, duration, stepSize = 2) => {
-    let currentProgress = startProgress;
+  // Smooth progress simulation
+  const startProgressSimulation = () => {
+    let progress = 1;
     const intervalId = setInterval(() => {
-      if (currentProgress < endProgress) {
-        currentProgress = Math.min(currentProgress + stepSize, endProgress);
-        setAnalysisProgress(currentProgress);
-      } else {
-        clearInterval(intervalId);
+      if (progress < 90) {
+        // Slow down progress as it gets higher
+        const increment = Math.max(0.5, (90 - progress) / 50);
+        progress = Math.min(90, progress + increment);
+        setAnalysisProgress(Math.round(progress));
       }
-    }, duration / ((endProgress - startProgress) / stepSize));
+    }, 100);
     return intervalId;
   };
 
@@ -44,44 +45,25 @@ const ImageAnalysis = () => {
     setSelectedImage(file);
     setImagePreview(URL.createObjectURL(file));
     setIsAnalyzing(true);
-    setAnalysisMessage('Starting analysis...');
-    setAnalysisProgress(0);
+    setAnalysisMessage('Identifying boat characteristics...');
+    setAnalysisProgress(1);
+
+    // Start progress simulation
+    const progressInterval = startProgressSimulation();
 
     try {
-      // Initial progress simulation
-      const initialProgressId = simulateProgress(0, 30, 1000);
-
-      // Simulate processing stages
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      clearInterval(initialProgressId);
-      setAnalysisMessage('Analyzing boat features...');
-      
-      const midProgressId = simulateProgress(30, 60, 1500);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      clearInterval(midProgressId);
-      
-      setAnalysisMessage('Identifying characteristics...');
-      const lateProgressId = simulateProgress(60, 85, 1500);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      clearInterval(lateProgressId);
-
       // Call the API
-      const results = await analyzeBoatImage(file, (progress, message) => {
-        setAnalysisProgress(progress);
+      const results = await analyzeBoatImage(file, (message) => {
         if (message) setAnalysisMessage(message);
       });
       
-      // Final progress
-      setAnalysisMessage('Completing analysis...');
-      const finalProgressId = simulateProgress(85, 100, 1000);
-      
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      clearInterval(finalProgressId);
-      
+      // Complete the progress
+      clearInterval(progressInterval);
+      setAnalysisProgress(100);
       setAnalysisResults(results);
       setIsAnalyzing(false);
-
     } catch (err) {
+      clearInterval(progressInterval);
       setError('Failed to analyze image. Please try again.');
       setIsAnalyzing(false);
     }

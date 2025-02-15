@@ -13,7 +13,7 @@ export async function analyzeBoatImage(file, onProgress) {
   console.group('🚤 Boat Image Analysis');
   try {
     console.log('Starting analysis process...');
-    onProgress?.(25, 'Starting image analysis...');
+    onProgress?.('Identifying boat characteristics...');
 
     // Convert file to base64
     const base64Image = await new Promise((resolve, reject) => {
@@ -77,7 +77,7 @@ Look carefully at the design elements that distinguish this type of boat - espec
       messageLength: messages[0].content[0].text.length
     });
 
-    onProgress?.(50, 'Processing with GPT-4o...');
+    onProgress?.('Identifying boat characteristics...');
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -173,7 +173,7 @@ Look carefully at the design elements that distinguish this type of boat - espec
     console.groupEnd();
     console.groupEnd();
 
-    onProgress?.(100, 'Analysis complete');
+    onProgress?.('Finalizing analysis...');
 
     const result = {
       detectedType,

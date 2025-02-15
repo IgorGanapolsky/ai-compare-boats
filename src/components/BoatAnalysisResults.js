@@ -27,7 +27,6 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
         <div className="boat-details">
           <div className="details-header">
             <h2>Uploaded Boat</h2>
-            <div className="processing-badge">Processing...</div>
           </div>
 
           <div className="details-grid">
@@ -45,7 +44,10 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
 
           {keyFeatures && keyFeatures.length > 0 && (
             <div className="detail-section">
-              <label>Key Features</label>
+              <div className="section-header">
+                <label>Key Features</label>
+                <div className="section-badge oval-badge">Key Features</div>
+              </div>
               <div className="tags-container">
                 {keyFeatures.map((feature, index) => (
                   <span key={index} className="feature-tag">{feature}</span>
@@ -56,10 +58,13 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
 
           {style && style.length > 0 && (
             <div className="detail-section">
-              <label>Style</label>
+              <div className="section-header">
+                <label>Style</label>
+                <div className="section-badge oval-badge">Style</div>
+              </div>
               <div className="tags-container">
-                {style.map((item, index) => (
-                  <span key={index} className="style-tag">{item}</span>
+                {style.map((styleItem, index) => (
+                  <span key={index} className="feature-tag">{styleItem}</span>
                 ))}
               </div>
             </div>
