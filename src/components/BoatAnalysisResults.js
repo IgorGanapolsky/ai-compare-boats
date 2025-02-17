@@ -1,5 +1,6 @@
 import React from 'react';
 import './BoatAnalysisResults.css';
+import SimilarBoats from './SimilarBoats';
 
 const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
   const {
@@ -15,30 +16,23 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
       <div className="results-content">
         <div className="boat-image">
           <img src={imagePreview} alt="Analyzed boat" />
-          <button className="new-search-button" onClick={onReset}>
-            <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M16.6667 10.0001C16.6667 13.6834 13.6834 16.6667 10 16.6667C6.31669 16.6667 3.33335 13.6834 3.33335 10.0001C3.33335 6.31674 6.31669 3.33341 10 3.33341M10 3.33341L13.3334 6.66674M10 3.33341L6.66669 6.66674" stroke="currentColor" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+          <button onClick={onReset} className="new-search-button">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M13.3333 8C13.3333 10.9467 10.9467 13.3333 8 13.3333C5.05333 13.3333 2.66667 10.9467 2.66667 8C2.66667 5.05333 5.05333 2.66667 8 2.66667M8 2.66667L10.6667 5.33333M8 2.66667L5.33333 5.33333" stroke="currentColor" strokeWidth="1.33333" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
             New Search
           </button>
         </div>
-        
-        <div className="boat-details">
-          <div className="details-header">
-            <h2>Uploaded Boat</h2>
-            <div className="processing-badge">Processing...</div>
-          </div>
 
+        <div className="boat-details">
           <div className="details-grid">
-            <div className="detail-item">
-              <label>Detected Type</label>
-              <span>{detectedType}</span>
-            </div>
+            <span className="label">Detected Type</span>
+            <span className="value">{detectedType}</span>
             {estimatedSize && (
-              <div className="detail-item">
-                <label>Estimated Size</label>
-                <span>{estimatedSize}</span>
-              </div>
+              <React.Fragment>
+                <span className="label">Estimated Size</span>
+                <span className="value">{estimatedSize}</span>
+              </React.Fragment>
             )}
           </div>
 
@@ -64,16 +58,18 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
             </div>
           )}
 
-          {(styleDetails) && (
+          {styleDetails && (
             <div className="detail-section">
               <label>Style Analysis</label>
               <div className="style-analysis">
-                {styleDetails && <p className="style-text">{styleDetails}</p>}
+                <p className="style-text">{styleDetails}</p>
               </div>
             </div>
           )}
         </div>
       </div>
+
+      <SimilarBoats currentBoatType={detectedType} />
     </div>
   );
 };
