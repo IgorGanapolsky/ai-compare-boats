@@ -25,6 +25,8 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
         </div>
 
         <div className="boat-details">
+          <h2 className="uploaded-boat-title">Uploaded Boat</h2>
+          
           <div className="details-grid">
             <span className="label">Detected Type</span>
             <span className="value">{detectedType}</span>
