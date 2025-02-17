@@ -48,15 +48,15 @@ Format your response as follows:
    - Navigation electronics)
 
 5. **Style Analysis**:
-   First paragraph: Describe the boat's specific purpose and target use case. For example: "This Bass Boat is specifically designed for freshwater fishing, particularly targeting bass and other panfish species. It is optimized for stability and maneuverability in shallow waters, making it ideal for anglers who need to navigate narrow channels and reach secluded fishing spots."
+   First paragraph: Describe the boat's specific purpose and target use case.
 
    Key Features of Its Style:
-   • Purpose & Use: Focus on specific activities (bass fishing, general fishing, etc.)
-   • Design & Layout: How do specific design elements (raised decks, storage, seating) support its primary purpose?
-   • Equipment & Accessories: Notable fishing-specific equipment (trolling motors, fish finders, rod holders)
+   • Purpose & Use: Focus on specific activities
+   • Design & Layout: How do specific design elements support its primary purpose?
+   • Equipment & Accessories: Notable equipment and features
    • Performance Features: Propulsion, handling, and performance characteristics
 
-Look carefully at the design elements that distinguish this type of boat - especially the deck layout, seating arrangement, and specialized fishing equipment.`
+Look carefully at the design elements that distinguish this type of boat - especially the deck layout, seating arrangement, and specialized equipment.`
           },
           {
             type: "image_url",
@@ -87,7 +87,16 @@ Look carefully at the design elements that distinguish this type of boat - espec
         ?.split('\n')
         ?.map(f => f.replace(/^[- ]*/, ''))
         ?.filter(f => f.trim()),
-      styleDetails: analysis.match(/5\.\s*\*\*Style Analysis\*\*:?([\s\S]*?)(?=\n\n|$)/)?.[1]?.trim(),
+      styleDetails: analysis.match(/5\.\s*\*\*Style Analysis\*\*:?\s*([\s\S]*?)(?=\n\nKey Features of Its Style:|$)/)?.[1]
+        ?.trim()
+        ?.replace(/\*\*/g, ''),
+      styleFeatures: analysis.match(/Key Features of Its Style:([\s\S]*?)(?=\n\n|$)/)?.[1]
+        ?.trim()
+        ?.split('\n')
+        ?.map(line => line.replace(/^[•\s-]*/, ''))
+        ?.map(line => line.replace(/\*\*([^*]+)\*\*:/, '$1:'))
+        ?.join('\n')
+        ?.replace(/\*\*/g, ''),
       style: extractStyleTags(analysis)
     };
 
@@ -101,7 +110,7 @@ Look carefully at the design elements that distinguish this type of boat - espec
 
 // Update the extractStyleTags function to be more lenient
 function extractStyleTags(analysis) {
-  const styleSection = analysis.match(/Style Analysis:([\s\S]*?)(?=\n\n|$)/)?.[1] || analysis;
+  const styleSection = analysis.match(/5\.\s*\*\*Style Analysis\*\*:?([\s\S]*?)$/)?.[1] || '';
   if (!styleSection) return [];
 
   // Extract style-related keywords with more patterns

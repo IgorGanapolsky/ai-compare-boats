@@ -8,7 +8,6 @@ const ImageAnalysis = () => {
   const [imagePreview, setImagePreview] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
-  const [analysisMessage, setAnalysisMessage] = useState('');
   const [analysisResults, setAnalysisResults] = useState(null);
   const [error, setError] = useState(null);
 
@@ -43,19 +42,14 @@ const ImageAnalysis = () => {
 
     setImagePreview(URL.createObjectURL(file));
     setIsAnalyzing(true);
-    setAnalysisMessage('Identifying boat characteristics...');
     setAnalysisProgress(1);
 
-    // Start progress simulation
     const progressInterval = startProgressSimulation();
 
     try {
       // Call the API
-      const results = await analyzeBoatImage(file, (message) => {
-        if (message) setAnalysisMessage(message);
-      });
+      const results = await analyzeBoatImage(file);
 
-      // Complete the progress
       clearInterval(progressInterval);
       setAnalysisProgress(100);
       setAnalysisResults(results);
@@ -82,7 +76,6 @@ const ImageAnalysis = () => {
     setAnalysisResults(null);
     setIsAnalyzing(false);
     setAnalysisProgress(0);
-    setAnalysisMessage('');
     setError(null);
   };
 
@@ -139,7 +132,7 @@ const ImageAnalysis = () => {
                   style={{ width: `${analysisProgress}%` }}
                 ></div>
               </div>
-              <div className="analysis-status">{analysisMessage}</div>
+              <div className="analysis-status">Identifying boat characteristics...</div>
             </div>
           </div>
         )}

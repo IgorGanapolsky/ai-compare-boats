@@ -128,11 +128,16 @@
 
 .feature-tag,
 .style-tag {
+  display: inline-flex;
+  align-items: center;
   padding: 4px 12px;
-  background: #2563EB;
-  color: white;
+  background: #EFF6FF;
+  color: #2563EB;
   border-radius: 16px;
   font-size: 14px;
+  font-family: 'Inter', sans-serif;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 /* Section Title */
@@ -248,17 +253,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.feature-tag {
-  display: inline-flex;
-  align-items: center;
-  padding: 4px 12px;
-  background: #EFF6FF;
-  border-radius: 16px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #2563EB;
 }
 
 .style-section {
@@ -406,24 +400,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-}
-
-.feature-tag, .style-tag {
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  padding: 4px 12px;
-  border-radius: 16px;
-  white-space: nowrap;
-}
-
-.feature-tag {
-  color: #111827;
-  background: #F3F4F6;
-}
-
-.style-tag {
-  color: #111827;
-  background: #F3F4F6;
 }
 
 .results-title {
@@ -792,50 +768,39 @@
   font-weight: 500;
 }
 
-/* Add specific styles for style tags */
-.style-tag {
-  padding: 4px 12px;
-  background: #EFF6FF;
-  color: #2563EB;
-  border-radius: 16px;
+.style-text {
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
+  line-height: 1.6;
+  color: #374151;
+  margin: 0;
+  padding: 16px;
+  background: #F9FAFB;
+  border-radius: 8px;
+  white-space: pre-line;
 }
 
-/* Update feature tags to be distinct from style tags */
-.feature-tag {
-  padding: 4px 12px;
-  background: #2563EB;
-  color: white;
-  border-radius: 16px;
-  font-size: 14px;
+.style-analysis {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.detail-section {
+/* Add spacing between paragraphs */
+.style-text + .style-text {
+  margin-top: 8px;
+}
+
+.style-features {
   display: flex;
   flex-direction: column;
   gap: 8px;
 }
 
-.detail-section label {
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  font-weight: 500;
-  color: #6B7280;
-}
-
-.tags-container {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-}
-
-.style-text {
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  line-height: 1.5;
-  color: #374151;
-  margin: 0;
-  padding: 12px;
-  background: #F9FAFB;
-  border-radius: 8px;
+.improvements-section,
+.improvements-list,
+.improvement-item,
+.improvement-bullet,
+.improvement-text {
+  display: none;
 }
