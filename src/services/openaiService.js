@@ -139,7 +139,7 @@ Look carefully at the design elements that distinguish this type of boat - espec
     // Extract key features
     const featureMatches = styleText.matchAll(/•\s*([^:]+):\s*([^•]+)/g);
     for (const match of featureMatches) {
-      const [_, category, content] = match;
+      const [, category, content] = match;
       const feature = {
         category: category.trim(),
         content: content.trim()

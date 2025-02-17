@@ -5,7 +5,6 @@ import BoatAnalysisResults from './BoatAnalysisResults';
 import './ImageAnalysis.css';
 
 const ImageAnalysis = () => {
-  const [selectedImage, setSelectedImage] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [analysisProgress, setAnalysisProgress] = useState(0);
@@ -42,7 +41,6 @@ const ImageAnalysis = () => {
       return;
     }
 
-    setSelectedImage(file);
     setImagePreview(URL.createObjectURL(file));
     setIsAnalyzing(true);
     setAnalysisMessage('Identifying boat characteristics...');
@@ -80,7 +78,6 @@ const ImageAnalysis = () => {
   });
 
   const handleReset = () => {
-    setSelectedImage(null);
     setImagePreview(null);
     setAnalysisResults(null);
     setIsAnalyzing(false);

@@ -4,11 +4,9 @@ import './BoatAnalysisResults.css';
 const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
   const {
     detectedType,
-    engineType,
     estimatedSize,
     keyFeatures = [],
-    style = [],
-    overview
+    style = []
   } = results;
 
   return (
