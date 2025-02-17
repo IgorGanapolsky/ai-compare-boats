@@ -28,14 +28,14 @@
   align-self: center;
 }
 
+/* Remove background from these containers */
 .upload-container,
 .analysis-container,
 .results-container {
   width: 100%;
   display: flex;
-  align-items: center;
+  align-items: flex-start; /* Changed from center */
   justify-content: center;
-  background: #FFFFFF;
 }
 
 .upload-zone {

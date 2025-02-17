@@ -54,7 +54,7 @@ const ImageAnalysis = () => {
       const results = await analyzeBoatImage(file, (message) => {
         if (message) setAnalysisMessage(message);
       });
-      
+
       // Complete the progress
       clearInterval(progressInterval);
       setAnalysisProgress(100);
@@ -88,10 +88,14 @@ const ImageAnalysis = () => {
 
   return (
     <div className="image-analysis">
-      <h1>Find Similar Boats</h1>
-      <p className="description">
-        Upload a boat image and our AI will analyze its characteristics to find similar boats
-      </p>
+      {!isAnalyzing && !analysisResults && (
+        <>
+          <h1>Find Similar Boats</h1>
+          <p className="description">
+            Upload a boat image and our AI will analyze its characteristics to find similar boats
+          </p>
+        </>
+      )}
 
       {error && (
         <div className="error-message">
@@ -99,14 +103,14 @@ const ImageAnalysis = () => {
           <button onClick={() => setError(null)}>Dismiss</button>
         </div>
       )}
-      
-      <div className={isAnalyzing ? "analysis-container" : analysisResults ? "results-container" : "upload-container"}>
+
+      <div className="content-container">
         {!isAnalyzing && !analysisResults && (
           <div {...getRootProps({ className: 'upload-zone' })}>
             <input {...getInputProps()} />
             <div className="upload-content">
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M21 15V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V15M17 8L12 3M12 3L7 8M12 3V15" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                <path d="M21 15V16.2C21 17.8802 21 18.7202 20.673 19.362C20.3854 19.9265 19.9265 20.3854 19.362 20.673C18.7202 21 17.8802 21 16.2 21H7.8C6.11984 21 5.27976 21 4.63803 20.673C4.07354 20.3854 3.6146 19.9265 3.32698 19.362C3 18.7202 3 17.8802 3 16.2V15M17 8L12 3M12 3L7 8M12 3V15" stroke="#2563EB" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
               <div className="upload-text">
                 Drag and drop your boat image here or
@@ -130,8 +134,8 @@ const ImageAnalysis = () => {
                 <div className="progress-percentage">{Math.round(analysisProgress)}%</div>
               </div>
               <div className="progress-bar">
-                <div 
-                  className="progress" 
+                <div
+                  className="progress"
                   style={{ width: `${analysisProgress}%` }}
                 ></div>
               </div>
@@ -141,10 +145,10 @@ const ImageAnalysis = () => {
         )}
 
         {analysisResults && (
-          <BoatAnalysisResults 
-            results={analysisResults} 
+          <BoatAnalysisResults
+            results={analysisResults}
             imagePreview={imagePreview}
-            onReset={handleReset} 
+            onReset={handleReset}
           />
         )}
       </div>

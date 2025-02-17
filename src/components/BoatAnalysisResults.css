@@ -1,19 +1,20 @@
 /* Results Container */
 .boat-analysis-results {
   width: 100%;
-  min-height: calc(100vh - 64px);
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  background-color: #E5E7EB;
+  padding: 16px;
 }
 
 .results-content {
   display: flex;
   gap: 32px;
   background: #FFFFFF;
-  padding: 24px 32px;
-  width: 100%;
+  padding: 24px;
+  width: calc(100% - 32px); /* Slightly wider than before */
+  border-radius: 16px;
+  margin: 0 auto;
 }
 
 .boat-image {
@@ -27,9 +28,8 @@
 .boat-image img {
   width: 100%;
   aspect-ratio: 16/9;
-  border-radius: 8px;
+  border-radius: 12px;
   object-fit: cover;
-  display: block;
 }
 
 .new-search-button {
@@ -64,26 +64,28 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
-  min-width: 0;
-  padding-top: 4px;
 }
 
 .details-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
 }
 
 .details-header h2 {
   font-family: 'Inter', sans-serif;
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   color: #111827;
   margin: 0;
 }
 
 .processing-badge {
-  display: none;
+  padding: 4px 12px;
+  background: #EFF6FF;
+  color: #2563EB;
+  border-radius: 16px;
+  font-size: 14px;
 }
 
 .details-grid {
@@ -126,13 +128,11 @@
 
 .feature-tag,
 .style-tag {
-  padding: 2px 8px;
-  background: #F3F4F6;
-  border-radius: 12px;
-  font-family: 'Inter', sans-serif;
-  font-size: 12px;
-  color: #374151;
-  white-space: nowrap;
+  padding: 4px 12px;
+  background: #2563EB;
+  color: white;
+  border-radius: 16px;
+  font-size: 14px;
 }
 
 /* Section Title */
@@ -278,10 +278,10 @@
   display: inline-flex;
   align-items: center;
   padding: 4px 12px;
-  background: #F3F4F6;
+  background: #EFF6FF;
   border-radius: 16px;
   font-size: 14px;
-  color: #111827;
+  color: #2563EB;
 }
 
 .style-details {
@@ -790,4 +790,52 @@
   border-radius: 12px;
   font-size: 12px;
   font-weight: 500;
+}
+
+/* Add specific styles for style tags */
+.style-tag {
+  padding: 4px 12px;
+  background: #EFF6FF;
+  color: #2563EB;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+/* Update feature tags to be distinct from style tags */
+.feature-tag {
+  padding: 4px 12px;
+  background: #2563EB;
+  color: white;
+  border-radius: 16px;
+  font-size: 14px;
+}
+
+.detail-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.detail-section label {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 500;
+  color: #6B7280;
+}
+
+.tags-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.style-text {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #374151;
+  margin: 0;
+  padding: 12px;
+  background: #F9FAFB;
+  border-radius: 8px;
 }

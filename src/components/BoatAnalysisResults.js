@@ -6,7 +6,8 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
     detectedType,
     estimatedSize,
     keyFeatures = [],
-    style = []
+    style = [],
+    styleDetails = ''
   } = results;
 
   return (
@@ -25,6 +26,7 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
         <div className="boat-details">
           <div className="details-header">
             <h2>Uploaded Boat</h2>
+            <div className="processing-badge">Processing...</div>
           </div>
 
           <div className="details-grid">
@@ -42,10 +44,7 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
 
           {keyFeatures && keyFeatures.length > 0 && (
             <div className="detail-section">
-              <div className="section-header">
-                <label>Key Features</label>
-                <div className="section-badge oval-badge">Key Features</div>
-              </div>
+              <label>Key Features</label>
               <div className="tags-container">
                 {keyFeatures.map((feature, index) => (
                   <span key={index} className="feature-tag">{feature}</span>
@@ -56,15 +55,19 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
 
           {style && style.length > 0 && (
             <div className="detail-section">
-              <div className="section-header">
-                <label>Style</label>
-                <div className="section-badge oval-badge">Style</div>
-              </div>
+              <label>Style</label>
               <div className="tags-container">
                 {style.map((styleItem, index) => (
-                  <span key={index} className="feature-tag">{styleItem}</span>
+                  <span key={index} className="style-tag">{styleItem}</span>
                 ))}
               </div>
+            </div>
+          )}
+
+          {styleDetails && (
+            <div className="detail-section">
+              <label>Style Analysis</label>
+              <p className="style-text">{styleDetails}</p>
             </div>
           )}
         </div>

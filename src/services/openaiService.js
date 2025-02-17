@@ -9,12 +9,10 @@ if (!process.env.REACT_APP_OPENAI_API_KEY) {
   throw new Error('OpenAI API key is not configured. Please add REACT_APP_OPENAI_API_KEY to your environment variables.');
 }
 
-export async function analyzeBoatImage(file, onProgress) {
-  console.group('🚤 Boat Image Analysis');
+export const analyzeBoatImage = async (file, onProgress) => {
   try {
-    console.log('Starting analysis process...');
-    onProgress?.('Identifying boat characteristics...');
-
+    onProgress?.('Starting analysis process...');
+    
     // Convert file to base64
     const base64Image = await new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -70,15 +68,7 @@ Look carefully at the design elements that distinguish this type of boat - espec
       }
     ];
 
-    console.log('Sending request to OpenAI:', {
-      model: 'gpt-4o',
-      maxTokens: 800,
-      temperature: 0.2,
-      messageLength: messages[0].content[0].text.length
-    });
-
-    onProgress?.('Identifying boat characteristics...');
-
+    console.log('Sending request to OpenAI');
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       messages,
@@ -86,113 +76,42 @@ Look carefully at the design elements that distinguish this type of boat - espec
       temperature: 0.2
     });
 
-    console.log('Received response from OpenAI');
-
     const analysis = response.choices[0].message.content;
     console.log('Raw analysis:', analysis);
-    
-    // Extract basic information
-    console.group('Extracting Information');
-    
-    const detectedType = analysis.match(/1\.\s*\*\*Detected Boat Type\*\*:\s*([^\n]+)/)?.[1]?.trim() || 'Not detected';
-    console.log('Detected Type:', detectedType);
-    
-    const engineType = analysis.match(/2\.\s*\*\*Engine Type\*\*:\s*([^\n]+)/)?.[1]?.trim() || 'Not detected';
-    console.log('Engine Type:', engineType);
-    
-    const sizeMatch = analysis.match(/3\.\s*\*\*Estimated Size\*\*:\s*([^\n]+)/)?.[1]?.trim() || '';
-    const estimatedSize = sizeMatch.match(/(\d+(?:-\d+)?\s*feet)/i)?.[1] || 'Not detected';
-    console.log('Estimated Size:', estimatedSize);
 
-    // Extract features
-    const featuresMatch = analysis.match(/4\.\s*\*\*Key Features\*\*:\s*([\s\S]*?)(?=5\.)/);
-    const keyFeatures = featuresMatch
-      ? featuresMatch[1]
-          .split('\n')
-          .map(f => f.trim())
-          .filter(f => f && !f.includes('Key Features'))
-          .map(f => f.replace(/^\s*[-•]\s*/, '').trim())
-          .filter(f => f)
-      : [];
-    console.log('Key Features:', keyFeatures);
-
-    // Extract style information
-    const styleMatch = analysis.match(/5\.\s*\*\*Style Analysis\*\*:\s*([\s\S]*?)(?=\n\n|$)/);
-    const styleText = styleMatch ? styleMatch[1] : '';
-    console.log('Style Text:', styleText);
-    
-    // Process style sections
-    console.group('Processing Style Sections');
-    const styleDetails = [];
-    
-    // Extract main description
-    const mainDescMatch = styleText.match(/^([^•]+)/);
-    if (mainDescMatch) {
-      const overview = {
-        category: 'Overview',
-        content: mainDescMatch[1].trim()
-      };
-      console.log('Overview:', overview);
-      styleDetails.push(overview);
-    }
-
-    // Extract key features
-    const featureMatches = styleText.matchAll(/•\s*([^:]+):\s*([^•]+)/g);
-    for (const match of featureMatches) {
-      const [, category, content] = match;
-      const feature = {
-        category: category.trim(),
-        content: content.trim()
-      };
-      console.log('Style Feature:', feature);
-      styleDetails.push(feature);
-    }
-    console.groupEnd();
-
-    // Extract style tags
-    console.group('Processing Style Tags');
-    const styleTags = [];
-    const lowerText = styleText.toLowerCase();
-    
-    const tagChecks = [
-      { tag: 'Bass', conditions: [() => lowerText.includes('bass'), () => detectedType.toLowerCase().includes('bass')] },
-      { tag: 'Fishing', conditions: [() => lowerText.includes('fishing'), () => lowerText.includes('angler')] },
-      { tag: 'Family', conditions: [() => lowerText.includes('family')] },
-      { tag: 'Recreational', conditions: [() => lowerText.includes('recreational')] },
-      { tag: 'Sport', conditions: [() => lowerText.includes('sport')] }
-    ];
-
-    tagChecks.forEach(({ tag, conditions }) => {
-      if (conditions.some(check => check())) {
-        styleTags.push(tag);
-        console.log(`Added tag: ${tag}`);
-      }
-    });
-    
-    console.log('Final Style Tags:', styleTags);
-    console.groupEnd();
-    console.groupEnd();
-
-    onProgress?.('Finalizing analysis...');
-
-    const result = {
-      detectedType,
-      engineType,
-      estimatedSize,
-      keyFeatures,
-      styleTags,
-      styleDetails
+    // Parse the results
+    const results = {
+      detectedType: analysis.match(/1\.\s*\*\*Detected Boat Type\*\*:?\s*(.*?)(?=\n|$)/)?.[1]?.trim(),
+      estimatedSize: analysis.match(/3\.\s*\*\*Estimated Size\*\*:?\s*(.*?)(?=\n|$)/)?.[1]?.trim(),
+      keyFeatures: analysis.match(/4\.\s*\*\*Key Features\*\*:?([\s\S]*?)(?=\n\n5\.|$)/)?.[1]
+        ?.split('\n')
+        ?.map(f => f.replace(/^[- ]*/, ''))
+        ?.filter(f => f.trim()),
+      styleDetails: analysis.match(/5\.\s*\*\*Style Analysis\*\*:?([\s\S]*?)(?=\n\n|$)/)?.[1]?.trim(),
+      style: extractStyleTags(analysis)
     };
 
-    console.log('Final Analysis Result:', result);
-    console.groupEnd();
-    return result;
-
+    console.log('Parsed results:', results);
+    return results;
   } catch (error) {
-    console.error('❌ Error in analyzeBoatImage:', error);
-    console.groupEnd();
+    console.error('Error analyzing image:', error);
     throw error;
   }
+};
+
+// Update the extractStyleTags function to be more lenient
+function extractStyleTags(analysis) {
+  const styleSection = analysis.match(/Style Analysis:([\s\S]*?)(?=\n\n|$)/)?.[1] || analysis;
+  if (!styleSection) return [];
+
+  // Extract style-related keywords with more patterns
+  const styleWords = styleSection.match(/(?:fishing|recreational|sport|luxury|performance|offshore|inshore|bass|family|commercial|professional|utility|modern|traditional|classic|contemporary|versatile|practical)\b/gi);
+  
+  if (!styleWords) return [];
+
+  return [...new Set(styleWords)]
+    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+    .filter(Boolean);
 }
 
 export async function compareBoats(boat1, boat2) {

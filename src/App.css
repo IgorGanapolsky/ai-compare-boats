@@ -16,6 +16,7 @@ body {
   display: flex;
   flex-direction: column;
   background-color: #E5E7EB;
+  width: 100%;
 }
 
 main {
@@ -23,12 +24,14 @@ main {
   display: flex;
   flex-direction: column;
   background-color: #E5E7EB;
+  width: 100%;
 }
 
 .main-content {
-  padding: 24px;
-  max-width: 800px;
-  margin: 0 auto;
+  padding: 0;
+  max-width: none;
+  width: 100%;
+  margin: 0;
   display: flex;
   flex-direction: column;
   min-height: calc(100vh - 48px);
@@ -101,13 +104,20 @@ main {
   height: 20px;
 }
 
+.content-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0;
+  box-sizing: border-box;
+}
+
 .image-analysis {
   flex: 1;
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
-  background-color: #E5E7EB;
+  padding: 0;
   width: 100%;
+  margin: 0;
+  background-color: #E5E7EB;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
@@ -116,7 +126,7 @@ main {
 }
 
 .upload-section {
-  margin-bottom: 2rem;
+  width: 100%;
   margin: 0;
   padding: 0;
 }
