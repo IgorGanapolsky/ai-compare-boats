@@ -110,10 +110,16 @@
 
 .details-grid {
   display: grid;
-  grid-template-columns: auto 1fr;
-  gap: 8px 16px;
+  grid-template-columns: max-content max-content;
+  gap: 32px;
   margin-bottom: 24px;
-  align-items: baseline;
+  align-items: start;
+}
+
+.details-grid > div {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .details-grid .label {
@@ -121,13 +127,17 @@
   font-size: 14px;
   color: #6B7280;
   font-weight: 400;
+  line-height: 20px;
 }
 
 .details-grid .value {
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 16px;
+  letter-spacing: 0;
   color: #111827;
-  font-weight: 400;
+  white-space: nowrap;
 }
 
 .detail-section {
@@ -144,8 +154,8 @@
   font-size: 12px;
   font-weight: 500;
   color: #6B7280;
-  text-transform: uppercase;
   margin-bottom: 8px;
+  text-transform: none;
 }
 
 .tags-container {
@@ -813,12 +823,9 @@
 .style-text {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
-  line-height: 1.6;
+  line-height: 1.5;
   color: #374151;
   margin: 0;
-  padding: 16px;
-  background: #F9FAFB;
-  border-radius: 8px;
   white-space: pre-line;
 }
 

@@ -27,13 +27,15 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
           <h2 className="uploaded-boat-title">Uploaded Boat</h2>
           
           <div className="details-grid">
-            <span className="label">Detected Type</span>
-            <span className="value">{detectedType}</span>
+            <div>
+              <span className="label">Detected Type</span>
+              <span className="value">{detectedType}</span>
+            </div>
             {estimatedSize && (
-              <React.Fragment>
+              <div>
                 <span className="label">Estimated Size</span>
                 <span className="value">{estimatedSize}</span>
-              </React.Fragment>
+              </div>
             )}
           </div>
 
@@ -50,7 +52,7 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
 
           {style && style.length > 0 && (
             <div className="detail-section">
-              <label>Style</label>
+              <label>Boat Style</label>
               <div className="tags-container">
                 {style.map((styleItem, index) => (
                   <span key={index} className="style-tag">{styleItem}</span>
@@ -61,7 +63,7 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
 
           {styleDetails && (
             <div className="detail-section">
-              <label>Style Analysis</label>
+              <label>Detailed Style Analysis</label>
               <div className="style-analysis">
                 <p className="style-text">{styleDetails}</p>
               </div>
