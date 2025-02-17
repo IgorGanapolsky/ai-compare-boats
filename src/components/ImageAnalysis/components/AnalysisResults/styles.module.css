@@ -1,0 +1,158 @@
+.container {
+  width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.content {
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  display: flex;
+}
+
+.imageSection {
+  flex: 1;
+  padding: 1.5rem;
+  border-right: 1px solid #e5e7eb;
+  position: relative;
+}
+
+.image {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 1rem;
+}
+
+.resetButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  color: #475569;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.resetButton:hover {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+}
+
+.details {
+  flex: 1.2;
+  padding: 1.5rem;
+  overflow-y: auto;
+  max-height: 600px;
+}
+
+.title {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  margin-bottom: 1.5rem;
+}
+
+.mainInfo {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.infoItem {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.label {
+  font-size: 0.875rem;
+  color: #64748b;
+}
+
+.value {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1e293b;
+}
+
+.section {
+  margin-bottom: 1.5rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.sectionTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.75rem;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.tag {
+  padding: 0.25rem 0.75rem;
+  background: #f1f5f9;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.styleAnalysis {
+  margin-top: 1.5rem;
+}
+
+.styleDetail {
+  margin-bottom: 1.5rem;
+}
+
+.styleCategory {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.5rem;
+}
+
+.styleContent {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #1e293b;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.engineType {
+  margin-top: 1.5rem;
+}
+
+.engineDetail {
+  margin-bottom: 1.5rem;
+}
+
+.engineCategory {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.5rem;
+}
+
+.engineContent {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #1e293b;
+  margin: 0;
+  white-space: pre-line;
+}
