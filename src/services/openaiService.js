@@ -48,13 +48,7 @@ Format your response as follows:
    - Navigation electronics)
 
 5. **Style Analysis**:
-   First paragraph: Describe the boat's specific purpose and target use case.
-
-   Key Features of Its Style:
-   • Purpose & Use: Focus on specific activities
-   • Design & Layout: How do specific design elements support its primary purpose?
-   • Equipment & Accessories: Notable equipment and features
-   • Performance Features: Propulsion, handling, and performance characteristics
+   Provide a concise paragraph describing the boat's specific purpose, target use case, and key design elements that support its primary function.
 
 Look carefully at the design elements that distinguish this type of boat - especially the deck layout, seating arrangement, and specialized equipment.`
           },
@@ -89,13 +83,6 @@ Look carefully at the design elements that distinguish this type of boat - espec
         ?.filter(f => f.trim()),
       styleDetails: analysis.match(/5\.\s*\*\*Style Analysis\*\*:?\s*([\s\S]*?)(?=\n\nKey Features of Its Style:|$)/)?.[1]
         ?.trim()
-        ?.replace(/\*\*/g, ''),
-      styleFeatures: analysis.match(/Key Features of Its Style:([\s\S]*?)(?=\n\n|$)/)?.[1]
-        ?.trim()
-        ?.split('\n')
-        ?.map(line => line.replace(/^[•\s-]*/, ''))
-        ?.map(line => line.replace(/\*\*([^*]+)\*\*:/, '$1:'))
-        ?.join('\n')
         ?.replace(/\*\*/g, ''),
       style: extractStyleTags(analysis)
     };

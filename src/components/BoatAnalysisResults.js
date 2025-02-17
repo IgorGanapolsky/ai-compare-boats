@@ -7,8 +7,7 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
     estimatedSize,
     keyFeatures = [],
     style = [],
-    styleDetails = '',
-    styleFeatures = ''
+    styleDetails = ''
   } = results;
 
   return (
@@ -65,12 +64,11 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
             </div>
           )}
 
-          {(styleDetails || styleFeatures) && (
+          {(styleDetails) && (
             <div className="detail-section">
               <label>Style Analysis</label>
               <div className="style-analysis">
                 {styleDetails && <p className="style-text">{styleDetails}</p>}
-                {styleFeatures && <p className="style-text">{styleFeatures}</p>}
               </div>
             </div>
           )}
