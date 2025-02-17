@@ -48,7 +48,7 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
               <label>Key Features</label>
               <div className="tags-container">
                 {keyFeatures.map((feature, index) => (
-                  <span key={index} className="feature-tag">{feature}</span>
+                  <span key={index} className="style-tag">{feature}</span>
                 ))}
               </div>
             </div>
