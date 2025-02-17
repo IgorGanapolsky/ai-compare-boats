@@ -31,3 +31,203 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   overflow: hidden;
 }
+
+.dropzone {
+  padding: 3rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 2px dashed #e2e8f0;
+  border-radius: 8px;
+  margin: 1rem;
+}
+
+.dropzone:hover {
+  border-color: #3b82f6;
+  background-color: #f8fafc;
+}
+
+.uploadContent {
+  text-align: center;
+}
+
+.uploadIcon {
+  width: 48px;
+  height: 48px;
+  margin-bottom: 1rem;
+  color: #64748b;
+}
+
+.uploadHint {
+  color: #64748b;
+  font-size: 0.875rem;
+  margin-top: 0.5rem;
+}
+
+.analysisContainer {
+  padding: 1.5rem;
+}
+
+.imagePreviewContainer {
+  position: relative;
+  margin-bottom: 1.5rem;
+}
+
+.previewImage {
+  width: 100%;
+  border-radius: 8px;
+  display: block;
+}
+
+.progressOverlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255, 255, 255, 0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+}
+
+.progressContent {
+  width: 80%;
+  max-width: 400px;
+}
+
+.progressBar {
+  width: 100%;
+  height: 4px;
+  background: #e2e8f0;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 1rem;
+}
+
+.progressFill {
+  height: 100%;
+  background: #3b82f6;
+  transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.progressInfo {
+  text-align: center;
+}
+
+.progressPercentage {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1e293b;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.progressMessage {
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.resultsContainer {
+  padding: 1.5rem;
+  border-top: 1px solid #e2e8f0;
+}
+
+.resultSection {
+  margin-bottom: 2rem;
+}
+
+.resultTitle {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #64748b;
+  margin-bottom: 0.5rem;
+  text-transform: uppercase;
+}
+
+.resultValue {
+  font-size: 1rem;
+  color: #1e293b;
+  margin: 0;
+}
+
+.featuresList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.feature {
+  background: #f1f5f9;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  color: #475569;
+}
+
+.styleDetail {
+  margin-bottom: 1.5rem;
+}
+
+.styleCategory {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #475569;
+  margin-bottom: 0.5rem;
+}
+
+.styleContent {
+  font-size: 0.875rem;
+  line-height: 1.5;
+  color: #1e293b;
+  margin: 0;
+  white-space: pre-line;
+}
+
+.newSearchButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 1rem;
+  background: #3b82f6;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.newSearchButton:hover {
+  background: #2563eb;
+}
+
+.error {
+  text-align: center;
+  padding: 1.5rem;
+  background: #fef2f2;
+  border-radius: 8px;
+  margin-top: 1.5rem;
+}
+
+.errorMessage {
+  color: #991b1b;
+  margin-bottom: 1rem;
+}
+
+.retryButton {
+  background: #ef4444;
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.retryButton:hover {
+  background: #dc2626;
+}
