@@ -29,28 +29,46 @@ export const analyzeBoatImage = async (file, onProgress) => {
         content: [
           {
             type: "text",
-            text: `Analyze this boat image and provide a detailed classification. Pay special attention to distinguishing between different types of fishing boats. For example:
-- Bass Boats: Specialized for bass fishing, featuring raised casting decks, storage for rods, livewells
-- Jon Boats: Simple flat-bottom utility boats, typically without raised decks
-- Center Console: Fishing boats with the helm in the center
-- Sport Fishing: Larger offshore fishing vessels
+            text: `Analyze this boat image and provide a detailed classification. You MUST select the most specific boat type from the following list that matches the image:
+
+BOAT TYPES (select the most specific match):
+- Center Console Cabin Boat
+- Center Console
+- Express Cruiser
+- Sport Fishing
+- Sport Fishing Express
+- Bowrider
+- Jet Boat
+- Personal Watercraft
+
+DO NOT create new categories or combine terms. Pick the single most appropriate type from the list above.
 
 Format your response as follows:
 
-1. **Detected Boat Type** (be very specific, e.g., "Bass Boat" if you see raised casting decks, pedestal seats, and other bass fishing features)
-2. **Engine Type** (describe the visible propulsion system)
+1. **Detected Boat Type** (copy exact type from list above)
+
+2. **Engine Type** (describe the visible propulsion system):
+   - Configuration (single, twin, triple)
+   - Brand if visible
+   - Estimated power
+
 3. **Estimated Size** (in feet)
-4. **Key Features** (list 3-5 key visible features, focusing on fishing-specific equipment like:
-   - Casting decks
-   - Rod storage/holders
-   - Trolling motors
-   - Livewells
-   - Navigation electronics)
+
+4. **Key Features** (list 3-5 key visible features):
+   - Hull and deck configuration
+   - Cabin/console layout
+   - Navigation/electronics
+   - Fishing/sport equipment
+   - Safety features
 
 5. **Style Analysis**:
-   Provide a concise paragraph describing the boat's specific purpose, target use case, and key design elements that support its primary function.
+   Describe the boat's:
+   - Primary use case
+   - Key design elements
+   - Target market
+   - Notable capabilities
 
-Look carefully at the design elements that distinguish this type of boat - especially the deck layout, seating arrangement, and specialized equipment.`
+Look carefully at the helm position, cabin design, and overall layout to determine the exact boat type.`
           },
           {
             type: "image_url",

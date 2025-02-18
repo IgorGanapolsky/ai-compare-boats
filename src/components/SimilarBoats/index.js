@@ -74,6 +74,24 @@ export const getFeatureAnalysis = (currentBoat, comparisonBoat) => {
   };
 };
 
+const getBoatLength = (boat) => {
+  if (boat.length) return boat.length;
+  if (boat.dimensions?.lengthOverall) {
+    const match = boat.dimensions.lengthOverall.match(/(\d+)/);
+    return match ? parseFloat(match[1]) : null;
+  }
+  if (typeof boat.size === 'string') {
+    const match = boat.size.match(/(\d+)/);
+    return match ? parseFloat(match[1]) : null;
+  }
+  return boat.size || null;
+};
+
+const formatBoatLength = (boat) => {
+  const length = getBoatLength(boat);
+  return length ? `${Math.round(length)} ft` : 'N/A';
+};
+
 const BoatFeatures = ({ features = [] }) => {
   const [isExpanded, setIsExpanded] = useState(false);
   const visibleFeatures = features.slice(0, 4);
@@ -173,7 +191,7 @@ const SimilarBoats = ({ currentBoat }) => {
               <div className={styles.specs}>
                 <div className={styles.spec}>
                   <span className={styles.label}>Size</span>
-                  <span className={styles.value}>{boat.size} ft</span>
+                  <span className={styles.value}>{formatBoatLength(boat)}</span>
                 </div>
                 <div className={styles.spec}>
                   <span className={styles.label}>Type</span>

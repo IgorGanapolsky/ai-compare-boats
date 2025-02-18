@@ -4,7 +4,7 @@ const sampleBoats = [
         name: 'Axopar 37XC Cross Cabin',
         type: 'Center Console Cabin Boat',
         year: 2025,
-        length: 37.9, // Length in feet
+        length: 32, // Length in feet
         engine: 'Twin Mercury V8 FourStroke 300hp',
         totalPower: '600hp',
         engineHours: 0, // New boat

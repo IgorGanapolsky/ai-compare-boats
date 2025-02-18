@@ -2,24 +2,6 @@ import React from 'react';
 import styles from './styles.module.css';
 
 const DetailedComparison = ({ currentBoat, comparisonBoat, onClose }) => {
-  const getLengthAnalysis = () => {
-    const currentLength = parseFloat(currentBoat.length || currentBoat.size || '0');
-    const comparisonLength = parseFloat(comparisonBoat.length || '0');
-    const difference = Math.abs(comparisonLength - currentLength);
-    
-    const matchPercentage = difference <= 5 
-      ? Math.round(100 - (difference * 8))
-      : difference <= 10 
-        ? Math.round(60 - ((difference - 5) * 6))
-        : Math.max(0, Math.round(30 - ((difference - 10) * 3)));
-
-    return {
-      length: comparisonLength,
-      difference: difference.toFixed(1),
-      matchPercentage
-    };
-  };
-
   const getFeatureAnalysis = () => {
     const normalizeFeature = (feature) => feature.toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
@@ -92,25 +74,59 @@ const DetailedComparison = ({ currentBoat, comparisonBoat, onClose }) => {
     };
   };
 
-  const getMatchLevel = (percentage) => {
-    if (percentage >= 80) return 'high';
-    if (percentage >= 60) return 'medium';
-    return 'low';
-  };
-
-  const lengthAnalysis = getLengthAnalysis();
   const featureAnalysis = getFeatureAnalysis();
 
-  const renderSpecification = (label, value, matchPercentage) => {
-    const matchLevel = getMatchLevel(matchPercentage);
+  const formatBoatSize = (size) => {
+    // Handle null/undefined
+    if (!size) return 'N/A';
+    
+    // Convert to string if it's a number
+    const sizeStr = String(size);
+    
+    // Extract first number from string
+    const match = sizeStr.match(/(\d+(?:\.\d+)?)/);
+    if (!match) return 'N/A';
+    
+    // Round to nearest whole number
+    const value = Math.round(parseFloat(match[1]));
+    return `${value} ft`;
+  };
+
+  const renderSpecification = (label, value1, value2) => {
+    let match = false;
+    if (label === 'Length') {
+      const size1 = formatBoatSize(value1);
+      const size2 = formatBoatSize(value2);
+      value1 = size1;
+      value2 = size2;
+      // Compare numeric values only
+      const num1 = parseFloat(size1);
+      const num2 = parseFloat(size2);
+      match = !isNaN(num1) && !isNaN(num2) && Math.abs(num1 - num2) <= 2;
+    } else if (label === 'Boat Category') {
+      match = value1?.toLowerCase()?.trim() === value2?.toLowerCase()?.trim();
+    } else {
+      match = value1 === value2;
+    }
+
     return (
-      <div className={styles.specRow}>
-        <span className={styles.specLabel}>{label}</span>
+      <div className={styles.specification}>
+        <div className={styles.specLabel}>{label}</div>
         <div className={styles.specValue}>
-          {value}
-          <span className={`${styles.matchIndicator} ${styles[matchLevel]}`}>
-            {matchLevel === 'high' ? '✓' : '×'}
-          </span>
+          <div>{value1 || 'N/A'}</div>
+          {match ? (
+            <div className={styles.matchIcon}>✓</div>
+          ) : (
+            <div className={styles.noMatchIcon}>×</div>
+          )}
+        </div>
+        <div className={styles.specValue}>
+          <div>{value2 || 'N/A'}</div>
+          {match ? (
+            <div className={styles.matchIcon}>✓</div>
+          ) : (
+            <div className={styles.noMatchIcon}>×</div>
+          )}
         </div>
       </div>
     );
@@ -149,23 +165,23 @@ const DetailedComparison = ({ currentBoat, comparisonBoat, onClose }) => {
             <div className={styles.specGrid}>
               {renderSpecification(
                 'Length',
-                `${lengthAnalysis.length} ft (+${lengthAnalysis.difference} ft, ${lengthAnalysis.matchPercentage}% match)`,
-                lengthAnalysis.matchPercentage
+                currentBoat.length || currentBoat.size,
+                comparisonBoat.length
               )}
               {renderSpecification(
                 'Hull Material',
-                comparisonBoat.hullMaterial,
-                currentBoat.hullMaterial?.toLowerCase() === comparisonBoat.hullMaterial?.toLowerCase() ? 100 : 0
+                currentBoat.hullMaterial,
+                comparisonBoat.hullMaterial
               )}
               {renderSpecification(
                 'Engine',
-                comparisonBoat.engine,
-                currentBoat.engine === comparisonBoat.engine ? 100 : 0
+                currentBoat.engine,
+                comparisonBoat.engine
               )}
               {renderSpecification(
                 'Boat Category',
-                comparisonBoat.type,
-                currentBoat.type?.toLowerCase() === comparisonBoat.type?.toLowerCase() ? 100 : 0
+                currentBoat.type,
+                comparisonBoat.type
               )}
             </div>
           </section>
