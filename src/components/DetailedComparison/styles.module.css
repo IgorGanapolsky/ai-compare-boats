@@ -197,14 +197,10 @@
   color: #065F46;
 }
 
-.featureTag.uniqueUploaded {
-  background: #DBEAFE;
-  color: #1E40AF;
-}
-
+.featureTag.uniqueUploaded,
 .featureTag.uniqueMatch {
-  background: #FEF3C7;
-  color: #92400E;
+  background: #DBEAFE;
+  color: #2563EB;
 }
 
 .uniqueFeatures {
@@ -213,11 +209,21 @@
   gap: 24px;
 }
 
+.uniqueSection {
+  background: #F9FAFB;
+  border-radius: 8px;
+  padding: 16px;
+}
+
 .uniqueSection h4 {
   margin: 0 0 12px 0;
   font-size: 14px;
   font-weight: 600;
   color: #111827;
+}
+
+.uniqueSection .tagGroup {
+  margin-top: 8px;
 }
 
 .matchIndicator {
