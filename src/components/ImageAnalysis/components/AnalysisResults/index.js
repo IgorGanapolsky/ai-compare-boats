@@ -63,47 +63,55 @@ const AnalysisResults = ({ results, imagePreview, onReset }) => {
 
           <div className={styles.specificationTitle}>Key Specifications Comparison</div>
           <div className={styles.specificationsGrid}>
-            <div>
+            <div className={styles.specificationCard}>
               <span className={styles.specLabel}>Length</span>
-              <div className={styles.specValues}>
+              <div className={styles.specValueList}>
                 <div className={styles.specValue}>
-                  28 ft<XIcon className={styles.xIcon} />
+                  <span className={styles.specValueText}>30 ft</span>
+                  <CheckIcon className={styles.checkIcon} />
                 </div>
                 <div className={styles.specValue}>
-                  32 ft<XIcon className={styles.xIcon} />
+                  <span className={styles.specValueText}>32 ft</span>
+                  <CheckIcon className={styles.checkIcon} />
                 </div>
               </div>
             </div>
-            <div>
+            <div className={styles.specificationCard}>
               <span className={styles.specLabel}>Hull Material</span>
-              <div className={styles.specValues}>
+              <div className={styles.specValueList}>
                 <div className={styles.specValue}>
-                  N/A<XIcon className={styles.xIcon} />
+                  <span className={styles.specValueText}>N/A</span>
+                  <XIcon className={styles.xIcon} />
                 </div>
                 <div className={styles.specValue}>
-                  Fiberglass<XIcon className={styles.xIcon} />
+                  <span className={styles.specValueText}>Fiberglass</span>
+                  <XIcon className={styles.xIcon} />
                 </div>
               </div>
             </div>
-            <div>
+            <div className={styles.specificationCard}>
               <span className={styles.specLabel}>Engine</span>
-              <div className={styles.specValues}>
+              <div className={styles.specValueList}>
                 <div className={styles.specValue}>
-                  N/A<XIcon className={styles.xIcon} />
+                  <span className={styles.specValueText}>N/A</span>
+                  <XIcon className={styles.xIcon} />
                 </div>
                 <div className={styles.specValue}>
-                  Twin Mercury V8 FourStroke 300hp<XIcon className={styles.xIcon} />
+                  <span className={styles.specValueText}>Twin Mercury V8 FourStroke 300hp</span>
+                  <XIcon className={styles.xIcon} />
                 </div>
               </div>
             </div>
-            <div>
+            <div className={styles.specificationCard}>
               <span className={styles.specLabel}>Boat Category</span>
-              <div className={styles.specValues}>
+              <div className={styles.specValueList}>
                 <div className={styles.specValue}>
-                  Center Console Cabin Boat<CheckIcon className={styles.checkIcon} />
+                  <span className={styles.specValueText}>Center Console Cabin Boat</span>
+                  <CheckIcon className={styles.checkIcon} />
                 </div>
                 <div className={styles.specValue}>
-                  Center Console Cabin Boat<CheckIcon className={styles.checkIcon} />
+                  <span className={styles.specValueText}>Center Console Cabin Boat</span>
+                  <CheckIcon className={styles.checkIcon} />
                 </div>
               </div>
             </div>

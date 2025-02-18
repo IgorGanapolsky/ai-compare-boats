@@ -196,15 +196,16 @@
 
 .specificationsGrid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  column-gap: 48px;
-  row-gap: 24px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
 }
 
-.specificationGroup {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
+.specificationCard {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0px 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .specLabel {
@@ -215,23 +216,48 @@
   display: block;
 }
 
-.specValues {
+.specValueList {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 8px;
 }
 
 .specValue {
   display: flex;
   align-items: center;
+  gap: 8px;
   font-size: 14px;
-  color: #1A1A1A;
   line-height: 20px;
 }
 
-.specValue svg {
-  margin-left: 8px;
-  flex-shrink: 0;
+.specValueText {
+  color: #1A1A1A;
+}
+
+.matchText {
+  color: #00875A;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.errorText {
+  color: #DC2626;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lengthMatch {
+  color: #00875A;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lengthDiff {
+  color: #00875A;
+  font-size: 14px;
 }
 
 .checkIcon {
@@ -243,7 +269,14 @@
 .xIcon {
   width: 16px;
   height: 16px;
-  color: #EF4444;
+  color: #DC2626;
+}
+
+.infoIcon {
+  width: 16px;
+  height: 16px;
+  color: #9CA3AF;
+  cursor: help;
 }
 
 .featureAnalysis {
@@ -346,23 +379,4 @@
 
 .matchSuccess {
   color: #00875A;
-}
-
-.lengthMatch {
-  color: #00875A;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.lengthDiff {
-  color: #00875A;
-  font-size: 14px;
-}
-
-.infoIcon {
-  width: 16px;
-  height: 16px;
-  color: #9CA3AF;
-  cursor: help;
 }
