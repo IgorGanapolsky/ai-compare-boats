@@ -2,34 +2,7 @@ import React, { useState } from 'react';
 import styles from './styles.module.css';
 import sampleBoats from '../../data/sampleBoats';
 import DetailedComparison from '../DetailedComparison';
-
-const calculateMatchScore = (currentBoat, comparisonBoat) => {
-  // Length comparison (30% weight)
-  const lengthDiff = Math.abs(currentBoat.size - comparisonBoat.size);
-  const maxLengthDiff = 20; // Maximum length difference to consider
-  const lengthScore = Math.max(0, 1 - (lengthDiff / maxLengthDiff));
-  
-  // Type comparison (25% weight)
-  const typeScore = currentBoat.type === comparisonBoat.type ? 1 : 0.5;
-  
-  // Hull material comparison (15% weight)
-  const hullScore = currentBoat.hullMaterial === comparisonBoat.hullMaterial ? 1 : 0;
-  
-  // Feature comparison (30% weight)
-  const currentFeatures = new Set(currentBoat.features || []);
-  const comparisonFeatures = new Set(comparisonBoat.features || []);
-  const commonFeatures = new Set([...currentFeatures].filter(x => comparisonFeatures.has(x)));
-  const featureScore = commonFeatures.size / Math.max(currentFeatures.size, comparisonFeatures.size);
-  
-  // Calculate weighted score
-  const weightedScore = 
-    (lengthScore * 0.30) +
-    (typeScore * 0.25) +
-    (hullScore * 0.15) +
-    (featureScore * 0.30);
-  
-  return Math.round(weightedScore * 100);
-};
+import { calculateMatchScore } from '../../utils/boatMatching';
 
 export const getFeatureAnalysis = (currentBoat, comparisonBoat) => {
   // Extract features from boat descriptions and feature lists

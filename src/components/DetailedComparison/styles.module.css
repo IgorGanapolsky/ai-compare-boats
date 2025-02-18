@@ -6,31 +6,30 @@
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
   display: flex;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
   z-index: 1000;
 }
 
 .modal {
   background: white;
   border-radius: 12px;
-  padding: 24px;
   width: 90%;
   max-width: 800px;
   max-height: 90vh;
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .header {
+  padding: 24px;
+  border-bottom: 1px solid #E5E7EB;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
 }
 
 .header h2 {
   margin: 0;
-  font-family: 'Inter', sans-serif;
   font-size: 20px;
   font-weight: 600;
   color: #111827;
@@ -42,87 +41,109 @@
   font-size: 24px;
   color: #6B7280;
   cursor: pointer;
-  padding: 4px;
 }
 
-.boatComparison {
+.content {
+  padding: 24px;
+  overflow-y: auto;
+  max-height: calc(90vh - 73px);
+}
+
+.boatImages {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
   margin-bottom: 32px;
 }
 
-.boatImage {
+.boatSection {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+}
+
+.boatSection h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.boatSection img {
   width: 100%;
-  height: 200px;
+  height: 240px;
   object-fit: cover;
   border-radius: 8px;
 }
 
-.specificationSection {
+.specifications {
   margin-bottom: 32px;
+}
+
+.specifications h3 {
+  margin: 0 0 16px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.specGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
 }
 
 .specRow {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 0;
-  border-bottom: 1px solid #E5E7EB;
+  padding: 12px;
+  background: #F9FAFB;
+  border-radius: 8px;
 }
 
-.specComparison {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.specLabel {
+  color: #374151;
+  font-size: 14px;
 }
 
-.matchIndicator {
+.specValue {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.matchCheck {
   color: #059669;
 }
 
-.infoIcon {
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: #E5E7EB;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 12px;
-  color: #6B7280;
-  cursor: help;
-}
-
-.matchIcon {
-  color: #059669;
-}
-
-.noMatchIcon {
+.matchX {
   color: #DC2626;
 }
 
 .featureAnalysis {
-  background: #F9FAFB;
-  border-radius: 8px;
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
-.featureMetrics {
+.metrics {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 24px;
-  margin-bottom: 32px;
+  gap: 16px;
 }
 
 .metric {
+  background: #F9FAFB;
+  padding: 16px;
+  border-radius: 8px;
   text-align: center;
 }
 
 .metricValue {
+  display: block;
   font-size: 24px;
   font-weight: 600;
   color: #111827;
@@ -134,22 +155,37 @@
   color: #6B7280;
 }
 
-.featureList {
-  margin-bottom: 24px;
+.featureTags, .uniqueFeatures {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
 }
 
-.features {
+.tagGroup {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
 }
 
-.feature {
-  background: #E5E7EB;
-  padding: 4px 12px;
+.featureTag {
+  padding: 6px 12px;
   border-radius: 100px;
   font-size: 14px;
-  color: #374151;
+}
+
+.common {
+  background: #ECFDF5;
+  color: #059669;
+}
+
+.uniqueUploaded {
+  background: #EEF2FF;
+  color: #4F46E5;
+}
+
+.uniqueMatch {
+  background: #FEF3C7;
+  color: #D97706;
 }
 
 .uniqueFeatures {
@@ -159,21 +195,47 @@
 }
 
 .uniqueSection h4 {
-  margin-bottom: 12px;
+  margin: 0 0 12px 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #111827;
 }
 
-/* Feature colors based on type */
-.feature[data-type="common"] {
-  background: #D1FAE5;
-  color: #065F46;
+.matchIndicator {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  margin-left: 8px;
+  font-weight: 500;
 }
 
-.feature[data-type="unique-current"] {
-  background: #E0F2FE;
-  color: #0369A1;
+.high {
+  background-color: #ECFDF5;
+  color: #059669;
 }
 
-.feature[data-type="unique-comparison"] {
-  background: #FEF3C7;
-  color: #92400E;
+.medium {
+  background-color: #FEF3C7;
+  color: #D97706;
+}
+
+.low {
+  background-color: #FEE2E2;
+  color: #DC2626;
+}
+
+.matchScoreBadge {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  background: #2563EB;
+  color: white;
+  padding: 6px 12px;
+  border-radius: 100px;
+  font-size: 14px;
+  font-weight: 500;
+  z-index: 1;
 }

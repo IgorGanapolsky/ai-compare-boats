@@ -2,13 +2,26 @@ const sampleBoats = [
     {
         id: 4,
         name: 'Axopar 37XC Cross Cabin',
-        type: 'Sports Cruiser',
+        type: 'Center Console Cabin Boat',
         year: 2025,
         length: 37.9, // Length in feet
         engine: 'Twin Mercury V8 FourStroke 300hp',
         totalPower: '600hp',
         engineHours: 0, // New boat
         hullMaterial: 'Fiberglass',
+        keyFeatures: [
+            'Enclosed cabin with windows',
+            'Center console helm',
+            'Walkaround deck',
+            'Hardtop roof for weather protection',
+            'Rod holders along the sides'
+        ],
+        style: [
+            'Offshore',
+            'Sport',
+            'Fishing',
+            'Versatile'
+        ],
         dimensions: {
             lengthOverall: '37ft 9in',
             beam: '11ft',
