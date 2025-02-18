@@ -9,8 +9,18 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset, setSelectedBoat, 
     estimatedSize,
     keyFeatures = [],
     style = [],
-    styleDetails = ''
+    styleDetails = '',
+    hullMaterial = '',
+    engineConfig = {}
   } = results;
+
+  // Format engine string from engineConfig
+  const engineString = [
+    engineConfig.count,
+    engineConfig.brand,
+    engineConfig.type,
+    engineConfig.power ? `(${engineConfig.power})` : ''
+  ].filter(Boolean).join(' ');
 
   const currentBoat = {
     name: 'Your Reference Boat',
@@ -20,7 +30,9 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset, setSelectedBoat, 
     description: styleDetails,
     imageUrl: imagePreview,
     features: keyFeatures,
-    style
+    style,
+    hullMaterial: hullMaterial || 'N/A',
+    engine: engineString || 'N/A'
   };
 
   return (

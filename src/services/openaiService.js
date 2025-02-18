@@ -23,52 +23,48 @@ export const analyzeBoatImage = async (file, onProgress) => {
 
     console.log('Image prepared for OpenAI API');
 
+    const prompt = `Analyze this boat image and provide a detailed classification. You MUST be specific about hull material and engine configuration.
+
+1. **Detected Boat Type** (select the most specific match):
+   - Center Console Cabin Boat
+   - Center Console
+   - Express Cruiser
+   - Sport Fishing
+   - Sport Fishing Express
+   - Bowrider
+   - Jet Boat
+   - Personal Watercraft
+
+2. **Hull Material** (look for specific indicators):
+   - Fiberglass (most common, look for gelcoat shine, molded lines)
+   - Aluminum (look for welded seams, rivets, metal finish)
+   - Wood (rare, look for planking, traditional construction)
+   - Composite (carbon fiber, kevlar - look for black/advanced materials)
+   Provide confidence level in material identification.
+
+3. **Engine Configuration** (analyze visible indicators):
+   - Number of Engines (look for multiple cowlings, exhaust outlets)
+   - Engine Type (Outboard/Inboard/I/O - check transom design)
+   - Engine Brand if visible (Mercury, Yamaha, Volvo, etc.)
+   - Approximate Power Range based on boat size and type
+   Be specific about what indicators you see to make this determination.
+
+4. **Estimated Size** (in feet)
+
+5. **Key Features** (list 3-5 key visible features)
+
+6. **Style Analysis**
+   Describe primary use case and key design elements.
+
+Look carefully at the transom, hull sides, and overall construction to determine materials and propulsion.`;
+
     const messages = [
       {
         role: "user",
         content: [
           {
             type: "text",
-            text: `Analyze this boat image and provide a detailed classification. You MUST select the most specific boat type from the following list that matches the image:
-
-BOAT TYPES (select the most specific match):
-- Center Console Cabin Boat
-- Center Console
-- Express Cruiser
-- Sport Fishing
-- Sport Fishing Express
-- Bowrider
-- Jet Boat
-- Personal Watercraft
-
-DO NOT create new categories or combine terms. Pick the single most appropriate type from the list above.
-
-Format your response as follows:
-
-1. **Detected Boat Type** (copy exact type from list above)
-
-2. **Engine Type** (describe the visible propulsion system):
-   - Configuration (single, twin, triple)
-   - Brand if visible
-   - Estimated power
-
-3. **Estimated Size** (in feet)
-
-4. **Key Features** (list 3-5 key visible features):
-   - Hull and deck configuration
-   - Cabin/console layout
-   - Navigation/electronics
-   - Fishing/sport equipment
-   - Safety features
-
-5. **Style Analysis**:
-   Describe the boat's:
-   - Primary use case
-   - Key design elements
-   - Target market
-   - Notable capabilities
-
-Look carefully at the helm position, cabin design, and overall layout to determine the exact boat type.`
+            text: prompt
           },
           {
             type: "image_url",
@@ -94,15 +90,27 @@ Look carefully at the helm position, cabin design, and overall layout to determi
     // Parse the results
     const results = {
       detectedType: analysis.match(/1\.\s*\*\*Detected Boat Type\*\*:?\s*(.*?)(?=\n|$)/)?.[1]?.trim(),
-      estimatedSize: analysis.match(/3\.\s*\*\*Estimated Size\*\*:?\s*(.*?)(?=\n|$)/)?.[1]?.trim(),
-      keyFeatures: analysis.match(/4\.\s*\*\*Key Features\*\*:?([\s\S]*?)(?=\n\n5\.|$)/)?.[1]
+      estimatedSize: analysis.match(/4\.\s*\*\*Estimated Size\*\*:?\s*(.*?)(?=\n|$)/)?.[1]?.trim(),
+      keyFeatures: analysis.match(/5\.\s*\*\*Key Features\*\*:?([\s\S]*?)(?=\n\n6\.|$)/)?.[1]
         ?.split('\n')
         ?.map(f => f.replace(/^[- ]*/, ''))
         ?.filter(f => f.trim()),
-      styleDetails: analysis.match(/5\.\s*\*\*Style Analysis\*\*:?\s*([\s\S]*?)(?=\n\nKey Features of Its Style:|$)/)?.[1]
+      styleDetails: analysis.match(/6\.\s*\*\*Style Analysis\*\*:?\s*([\s\S]*?)(?=\n\nKey Features of Its Style:|$)/)?.[1]
         ?.trim()
         ?.replace(/\*\*/g, ''),
-      style: extractStyleTags(analysis)
+      style: extractStyleTags(analysis),
+      hullMaterial: analysis.match(/2\.\s*\*\*Hull Material\*\*:?([\s\S]*?)(?=\n\n3\.|$)/)?.[1]
+        ?.split('\n')
+        ?.find(line => line.includes('-'))
+        ?.replace(/^[- ]*/, '')
+        ?.split('(')[0]
+        ?.trim(),
+      engineConfig: {
+        type: analysis.match(/Engine Type:?\s*(.*?)(?=\n|$)/)?.[1]?.trim(),
+        count: analysis.match(/Number of Engines:?\s*(.*?)(?=\n|$)/)?.[1]?.trim(),
+        brand: analysis.match(/Engine Brand:?\s*(.*?)(?=\n|$)/)?.[1]?.trim(),
+        power: analysis.match(/Approximate Power:?\s*(.*?)(?=\n|$)/)?.[1]?.trim()
+      }
     };
 
     console.log('Parsed results:', results);
@@ -115,7 +123,7 @@ Look carefully at the helm position, cabin design, and overall layout to determi
 
 // Update the extractStyleTags function to be more lenient
 function extractStyleTags(analysis) {
-  const styleSection = analysis.match(/5\.\s*\*\*Style Analysis\*\*:?([\s\S]*?)$/)?.[1] || '';
+  const styleSection = analysis.match(/6\.\s*\*\*Style Analysis\*\*:?([\s\S]*?)$/)?.[1] || '';
   if (!styleSection) return [];
 
   // Extract style-related keywords with more patterns
