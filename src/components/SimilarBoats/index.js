@@ -3,59 +3,111 @@ import styles from './styles.module.css';
 import sampleBoats from '../../data/sampleBoats';
 
 const calculateMatchPercentage = (currentBoat, sampleBoat) => {
-  // Clean and normalize strings for comparison
-  const normalizeString = (str) => str.toLowerCase().trim().replace(/\s+/g, ' ');
+  // Normalize strings for comparison
+  const normalizeString = (str) => str?.toLowerCase().trim().replace(/\s+/g, ' ') || '';
   
-  const currentBoatNorm = normalizeString(currentBoat);
-  const sampleBoatNameNorm = normalizeString(sampleBoat.name);
-  const sampleBoatTypeNorm = normalizeString(sampleBoat.type);
-
-  // If it's the exact same model or contains the model name
-  if (sampleBoatNameNorm.includes('montara naxos') || 
-      sampleBoatNameNorm.includes('naxos tritoon') || 
-      currentBoatNorm.includes(sampleBoatNameNorm) || 
-      sampleBoatNameNorm.includes(currentBoatNorm)) {
+  // First check if it's the exact same model
+  if (normalizeString(currentBoat).includes('axopar') && 
+      normalizeString(sampleBoat.name).includes('axopar 37xc cross cabin')) {
     return 100;
   }
-
-  // Start with base match for same type
+  
   let matchScore = 0;
-  let totalCriteria = 0;
-
-  // Type match (highest weight)
-  if (sampleBoatTypeNorm === 'pontoon boat' || 
-      sampleBoatTypeNorm.includes('pontoon') || 
-      currentBoatNorm.includes('pontoon')) {
-    matchScore += 40;
-  }
-  totalCriteria += 40;
-
-  // Size match (within 2 feet)
-  const currentSize = parseFloat(currentBoatNorm.match(/\d+/)?.[0] || 0);
-  const sampleSize = sampleBoat.length;
-  if (Math.abs(currentSize - sampleSize) <= 2) {
-    matchScore += 30;
-  }
-  totalCriteria += 30;
-
-  // Hull material match
-  if (sampleBoat.hullMaterial?.toLowerCase() === 'aluminum') {
-    matchScore += 15;
-  }
-  totalCriteria += 15;
-
-  // Features match
-  const hasCommonFeatures = sampleBoat.features.some(feature => 
-    normalizeString(feature).includes('bimini') || 
-    normalizeString(feature).includes('stereo') ||
-    normalizeString(feature).includes('seating')
-  );
-  if (hasCommonFeatures) {
-    matchScore += 15;
-  }
-  totalCriteria += 15;
-
-  return Math.round((matchScore / totalCriteria) * 100);
+  const weights = {
+    type: 40,      // Boat type is most important
+    length: 25,    // Length is second most important
+    features: 20,  // Features third most important
+    year: 15       // Year least important but still relevant
+  };
+  
+  // 1. Type Match (40%)
+  const typeMatch = () => {
+    const types = {
+      'center console': ['center console', 'cc', 'center console cabin', 'sports cruiser', 'cabin cruiser'],
+      'express cruiser': ['express cruiser', 'sport cruiser', 'cruiser', 'cabin cruiser'],
+      'sports cruiser': ['sport cruiser', 'express cruiser', 'cruiser', 'center console cabin'],
+      'pontoon': ['pontoon', 'tritoon'],
+      'motor yacht': ['motor yacht', 'yacht'],
+      'bowrider': ['bowrider', 'deck boat'],
+      'cabin cruiser': ['cabin cruiser', 'express cruiser', 'cruiser', 'center console cabin']
+    };
+    
+    const normalizedType = normalizeString(currentBoat);
+    const sampleType = normalizeString(sampleBoat.type);
+    
+    // Direct match
+    if (normalizedType === sampleType) return 1;
+    
+    // Check related types
+    for (const [, relatedTypes] of Object.entries(types)) {
+      if (relatedTypes.includes(normalizedType) && relatedTypes.includes(sampleType)) {
+        return 0.9;
+      }
+    }
+    
+    return 0;
+  };
+  
+  // 2. Length Match (25%)
+  const lengthMatch = () => {
+    const currentLength = parseFloat(String(sampleBoat.length));
+    if (isNaN(currentLength)) return 0;
+    
+    const lengthDiff = Math.abs(currentLength - parseFloat(String(sampleBoat.length)));
+    if (lengthDiff <= 2) return 1;        // Within 2 feet
+    if (lengthDiff <= 5) return 0.8;      // Within 5 feet
+    if (lengthDiff <= 10) return 0.5;     // Within 10 feet
+    return 0;
+  };
+  
+  // 3. Features Match (20%)
+  const featuresMatch = () => {
+    if (!Array.isArray(sampleBoat.features)) return 0;
+    
+    const commonFeatures = [
+      'cabin',
+      'console',
+      'fishing',
+      'cruising',
+      'navigation',
+      'seating',
+      'storage',
+      'platform',
+      'electronics'
+    ];
+    
+    let matchCount = 0;
+    const normalizedFeatures = sampleBoat.features.map(f => normalizeString(f));
+    
+    commonFeatures.forEach(feature => {
+      if (normalizedFeatures.some(f => f.includes(feature))) {
+        matchCount++;
+      }
+    });
+    
+    return matchCount / commonFeatures.length;
+  };
+  
+  // 4. Year Match (15%)
+  const yearMatch = () => {
+    const currentYear = new Date().getFullYear();
+    const boatYear = parseInt(sampleBoat.year);
+    if (isNaN(boatYear)) return 0;
+    
+    const yearDiff = Math.abs(currentYear - boatYear);
+    if (yearDiff === 0) return 1;        // Same year
+    if (yearDiff <= 2) return 0.8;       // Within 2 years
+    if (yearDiff <= 5) return 0.6;       // Within 5 years
+    return 0.4;                          // Older
+  };
+  
+  // Calculate weighted scores
+  matchScore += weights.type * typeMatch();
+  matchScore += weights.length * lengthMatch();
+  matchScore += weights.features * featuresMatch();
+  matchScore += weights.year * yearMatch();
+  
+  return Math.round(matchScore);
 };
 
 const getMatchLevel = (percentage) => {
