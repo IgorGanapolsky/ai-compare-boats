@@ -1,59 +1,104 @@
 import React, { useState } from 'react';
 import styles from './styles.module.css';
 import sampleBoats from '../../data/sampleBoats';
+import DetailedComparison from '../DetailedComparison';
 
-const calculateMatchPercentage = (currentBoat, sampleBoat) => {
-  // Normalize strings for comparison
-  const normalizeString = (str) => str?.toLowerCase().trim().replace(/\s+/g, ' ') || '';
+const calculateMatchScore = (currentBoat, comparisonBoat) => {
+  // Length comparison (30% weight)
+  const lengthDiff = Math.abs(currentBoat.size - comparisonBoat.size);
+  const maxLengthDiff = 20; // Maximum length difference to consider
+  const lengthScore = Math.max(0, 1 - (lengthDiff / maxLengthDiff));
   
-  let matchScore = 0;
-  const weights = {
-    type: 0.6,
-    size: 0.4
-  };
+  // Type comparison (25% weight)
+  const typeScore = currentBoat.type === comparisonBoat.type ? 1 : 0.5;
   
-  // Type match
-  const typeMatch = () => {
-    const currentType = normalizeString(currentBoat.type);
-    const sampleType = normalizeString(sampleBoat.type);
+  // Hull material comparison (15% weight)
+  const hullScore = currentBoat.hullMaterial === comparisonBoat.hullMaterial ? 1 : 0;
+  
+  // Feature comparison (30% weight)
+  const currentFeatures = new Set(currentBoat.features || []);
+  const comparisonFeatures = new Set(comparisonBoat.features || []);
+  const commonFeatures = new Set([...currentFeatures].filter(x => comparisonFeatures.has(x)));
+  const featureScore = commonFeatures.size / Math.max(currentFeatures.size, comparisonFeatures.size);
+  
+  // Calculate weighted score
+  const weightedScore = 
+    (lengthScore * 0.30) +
+    (typeScore * 0.25) +
+    (hullScore * 0.15) +
+    (featureScore * 0.30);
+  
+  return Math.round(weightedScore * 100);
+};
+
+export const getFeatureAnalysis = (currentBoat, comparisonBoat) => {
+  // Extract features from boat descriptions and feature lists
+  const extractFeatures = (boat) => {
+    const features = new Set();
     
-    const relatedTypes = {
-      'sport fishing boat': ['express cruiser', 'center console', 'sports cruiser'],
-      'center console cabin boat': ['center console cabin', 'sports cruiser', 'express cruiser'],
-      'center console cabin': ['center console cabin', 'sports cruiser', 'express cruiser'],
-      'sports cruiser': ['sports cruiser', 'center console cabin', 'express cruiser'],
-      'express cruiser': ['express cruiser', 'sports cruiser', 'center console cabin']
+    // Add explicit features if they exist
+    if (Array.isArray(boat.features)) {
+      boat.features.forEach(f => features.add(f.trim()));
+    }
+    
+    // Extract features from description
+    const description = boat.description || '';
+    const addFeatureIfPresent = (feature) => {
+      if (description.toLowerCase().includes(feature.toLowerCase())) {
+        features.add(feature);
+      }
     };
+
+    // Common boat features to look for
+    const commonFeatures = [
+      'Enclosed cabin',
+      'Hardtop',
+      'Rod holders',
+      'Navigation equipment',
+      'Deck space',
+      'Galley',
+      'Cabin',
+      'Fishing amenities',
+      'Air conditioning',
+      'Generator',
+      'Storage',
+      'Windshield',
+      'Seating'
+    ];
+
+    commonFeatures.forEach(addFeatureIfPresent);
     
-    // Direct match
-    if (currentType === sampleType) return 1;
-    
-    // Related type match
-    const currentTypeRelated = Object.entries(relatedTypes).find(([key]) => 
-      normalizeString(key) === currentType
-    );
-    
-    if (currentTypeRelated && currentTypeRelated[1].includes(sampleType)) return 0.8;
-    return 0;
-  };
-  
-  // Size match
-  const sizeMatch = () => {
-    const currentSize = parseFloat(String(currentBoat.length || currentBoat.size).match(/\d+/)?.[0] || '0');
-    const sampleSize = parseFloat(String(sampleBoat.length).match(/\d+/)?.[0] || '0');
-    
-    const sizeDiff = Math.abs(currentSize - sampleSize);
-    if (sizeDiff <= 2) return 1;
-    if (sizeDiff <= 5) return 0.8;
-    if (sizeDiff <= 10) return 0.5;
-    return 0;
+    return features;
   };
 
-  const typeScore = typeMatch();
-  const sizeScore = sizeMatch();
+  const currentFeatures = extractFeatures(currentBoat);
+  const comparisonFeatures = extractFeatures(comparisonBoat);
   
-  matchScore = (weights.type * typeScore) + (weights.size * sizeScore);
-  return Math.round(matchScore * 100);
+  // Find common features
+  const commonFeatures = [...currentFeatures].filter(x => 
+    [...comparisonFeatures].some(y => y.toLowerCase() === x.toLowerCase())
+  );
+  
+  // Find unique features for each boat
+  const uniqueToCurrentBoat = [...currentFeatures].filter(x => 
+    ![...comparisonFeatures].some(y => y.toLowerCase() === x.toLowerCase())
+  );
+  const uniqueToComparisonBoat = [...comparisonFeatures].filter(x => 
+    ![...currentFeatures].some(y => y.toLowerCase() === x.toLowerCase())
+  );
+  
+  const totalUniqueFeatures = uniqueToCurrentBoat.length + uniqueToComparisonBoat.length;
+  const featureMatchRate = commonFeatures.length > 0 ? 
+    Math.round((commonFeatures.length / (commonFeatures.length + totalUniqueFeatures)) * 100) : 0;
+  
+  return {
+    featureMatchRate,
+    commonFeatures,
+    uniqueToCurrentBoat,
+    uniqueToComparisonBoat,
+    commonFeaturesCount: commonFeatures.length,
+    uniqueFeaturesCount: totalUniqueFeatures
+  };
 };
 
 const BoatFeatures = ({ features = [] }) => {
@@ -90,26 +135,27 @@ const BoatFeatures = ({ features = [] }) => {
 };
 
 const SimilarBoats = ({ currentBoat }) => {
+  const [selectedBoat, setSelectedBoat] = useState(null);
+  
   console.log('Current boat:', currentBoat);
 
   const similarBoats = sampleBoats
     .map(boat => {
-      const matchPercentage = calculateMatchPercentage(currentBoat, boat);
-      console.log(`Match for ${boat.name}:`, matchPercentage);
+      const matchScore = calculateMatchScore(currentBoat, boat);
+      console.log(`Match for ${boat.name}:`, matchScore);
       return {
         ...boat,
-        matchPercentage
+        matchScore
       };
     })
-    .sort((a, b) => b.matchPercentage - a.matchPercentage)
+    .sort((a, b) => b.matchScore - a.matchScore)
     .slice(0, 3);
 
   console.log('Similar boats:', similarBoats);
 
-  // Add image error handling
-  const handleImageError = (e, boatName) => {
-    console.error(`Failed to load image for ${boatName}:`, e.target.src);
-    e.target.style.backgroundColor = '#f3f4f6';
+  const handleImageClick = (boat, e) => {
+    e.stopPropagation(); // Prevent event from bubbling up
+    setSelectedBoat(boat);
   };
 
   return (
@@ -125,20 +171,25 @@ const SimilarBoats = ({ currentBoat }) => {
       </div>
 
       <div className={styles.boatsGrid}>
-        {similarBoats.map((boat) => (
-          <div key={boat.id} className={styles.boatCard}>
+        {similarBoats.map((boat, index) => (
+          <div 
+            key={index} 
+            className={styles.boatCard}
+          >
             <div className={styles.imageContainer}>
               <div 
                 className={styles.matchBadge}
-                data-match={boat.matchPercentage >= 90 ? "high" : boat.matchPercentage >= 80 ? "medium" : "low"}
+                data-match={boat.matchScore >= 90 ? "high" : boat.matchScore >= 80 ? "medium" : "low"}
               >
-                {boat.matchPercentage}% Match
+                {isNaN(boat.matchScore) ? 'N/A' : `${boat.matchScore}% Match`}
               </div>
               <img 
                 src={boat.imageUrl} 
                 alt={boat.name} 
                 className={styles.boatImage}
-                onError={(e) => handleImageError(e, boat.name)}
+                onClick={(e) => handleImageClick(boat, e)}
+                style={{ cursor: 'pointer' }}
+                onError={(e) => console.error(`Failed to load image for ${boat.name}:`, e.target.src)}
               />
             </div>
             
@@ -149,7 +200,7 @@ const SimilarBoats = ({ currentBoat }) => {
               <div className={styles.specs}>
                 <div className={styles.spec}>
                   <span className={styles.label}>Size</span>
-                  <span className={styles.value}>{boat.length} ft</span>
+                  <span className={styles.value}>{boat.size} ft</span>
                 </div>
                 <div className={styles.spec}>
                   <span className={styles.label}>Type</span>
@@ -177,6 +228,14 @@ const SimilarBoats = ({ currentBoat }) => {
           </div>
         ))}
       </div>
+
+      {selectedBoat && (
+        <DetailedComparison
+          currentBoat={currentBoat}
+          comparisonBoat={selectedBoat}
+          onClose={() => setSelectedBoat(null)}
+        />
+      )}
     </div>
   );
 };
