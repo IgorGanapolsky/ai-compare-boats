@@ -1,8 +1,10 @@
 .container {
+  padding: 24px;
+  background: white;
+  border-radius: 12px;
   width: 100%;
   max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
 }
 
 .content {
@@ -54,10 +56,10 @@
 }
 
 .title {
-  font-size: 1.25rem;
+  font-size: 20px;
   font-weight: 600;
-  color: #1e293b;
-  margin-bottom: 1.5rem;
+  color: #1A1A1A;
+  margin-bottom: 24px;
 }
 
 .mainInfo {
@@ -155,4 +157,206 @@
   color: #1e293b;
   margin: 0;
   white-space: pre-line;
+}
+
+.imagesContainer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  height: 240px;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.boatImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.boatName {
+  font-size: 16px;
+  font-weight: 500;
+  color: #1A1A1A;
+  margin-bottom: 16px;
+}
+
+.specificationTitle {
+  font-size: 16px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin: 24px 0 16px;
+}
+
+.specificationsGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+}
+
+.specificationGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.specLabel {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1A1A1A;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.specValueList {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.specValue {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #1A1A1A;
+}
+
+.checkIcon {
+  width: 16px;
+  height: 16px;
+  color: #00875A;
+}
+
+.xIcon {
+  width: 16px;
+  height: 16px;
+  color: #DC2626;
+}
+
+.featureAnalysis {
+  margin-top: 32px;
+}
+
+.featureStats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.statBox {
+  padding: 16px;
+  background: #F5F5F5;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.statValue {
+  font-size: 24px;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-bottom: 4px;
+}
+
+.statLabel {
+  font-size: 14px;
+  color: #666;
+}
+
+.commonFeatures {
+  margin-bottom: 24px;
+}
+
+.featuresList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.featureTag {
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  background: #E6F4F1;
+  color: #006644;
+}
+
+.uniqueFeatures {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+}
+
+.uniqueSection {
+  flex: 1;
+}
+
+.uniqueTitle {
+  font-size: 14px;
+  font-weight: 500;
+  color: #1A1A1A;
+  margin-bottom: 12px;
+}
+
+.uniqueTag {
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  background: #E8F0FE;
+  color: #1A73E8;
+  margin-right: 8px;
+  margin-bottom: 8px;
+  display: inline-block;
+}
+
+.closeButton {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+
+.closeIcon {
+  width: 20px;
+  height: 20px;
+  color: #666;
+}
+
+.matchIndicator {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.matchSuccess {
+  color: #00875A;
+}
+
+.lengthMatch {
+  color: #00875A;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lengthDiff {
+  color: #00875A;
+  font-size: 14px;
+}
+
+.infoIcon {
+  width: 16px;
+  height: 16px;
+  color: #9CA3AF;
+  cursor: help;
 }

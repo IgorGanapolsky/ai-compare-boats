@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from './styles.module.css';
+import { CheckIcon, XIcon, InfoIcon } from './icons'; // Assuming the icons are imported from a separate file
 
 const AnalysisResults = ({ results, imagePreview, onReset }) => {
   const {
@@ -57,6 +58,58 @@ const AnalysisResults = ({ results, imagePreview, onReset }) => {
               {styleTags.map((tag, index) => (
                 <span key={index} className={styles.tag}>{tag}</span>
               ))}
+            </div>
+          </div>
+
+          <div className={styles.specificationTitle}>Key Specifications Comparison</div>
+          <div className={styles.specificationsGrid}>
+            <div className={styles.specificationGroup}>
+              <div>
+                <span className={styles.specLabel}>Length</span>
+                <div className={styles.specValueList}>
+                  <div className={styles.specValue}>
+                    30 ft <CheckIcon className={styles.checkIcon} />
+                  </div>
+                  <div className={styles.specValue}>
+                    32 ft <CheckIcon className={styles.checkIcon} />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <span className={styles.specLabel}>Engine</span>
+                <div className={styles.specValueList}>
+                  <div className={styles.specValue}>
+                    N/A <XIcon className={styles.xIcon} />
+                  </div>
+                  <div className={styles.specValue}>
+                    Twin Mercury V8 FourStroke 300hp <XIcon className={styles.xIcon} />
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div className={styles.specificationGroup}>
+              <div>
+                <span className={styles.specLabel}>Hull Material</span>
+                <div className={styles.specValueList}>
+                  <div className={styles.specValue}>
+                    N/A <XIcon className={styles.xIcon} />
+                  </div>
+                  <div className={styles.specValue}>
+                    Fiberglass <XIcon className={styles.xIcon} />
+                  </div>
+                </div>
+              </div>
+              <div>
+                <span className={styles.specLabel}>Boat Category</span>
+                <div className={styles.specValueList}>
+                  <div className={styles.specValue}>
+                    Center Console Cabin Boat <CheckIcon className={styles.checkIcon} />
+                  </div>
+                  <div className={styles.specValue}>
+                    Center Console Cabin Boat <CheckIcon className={styles.checkIcon} />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
 
