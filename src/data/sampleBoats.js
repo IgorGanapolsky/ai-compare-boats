@@ -35,7 +35,7 @@ const sampleBoats = [
         price: 472311, // USD
         location: 'Tampa, FL',
         dealership: 'Seattle Yachts',
-        imageUrl: 'assets/boats/axopar-37xc-cross-cabin-2025.png',
+        imageUrl: '/boats/axopar-37xc-cross-cabin-2025.png',
     },
     {
         id: 5,
@@ -111,7 +111,7 @@ const sampleBoats = [
         price: 149000, // USD
         location: 'Lighthouse Point, FL',
         dealership: 'McKay Yacht Sales Inc.',
-        imageUrl: 'assets/boats/cabo-35-express-2002.png',
+        imageUrl: '/boats/cabo-35-express-2002.png',
     },
     {
         id: 7,
@@ -147,7 +147,7 @@ const sampleBoats = [
         price: 74999, // USD
         location: 'Polk City, IA',
         dealership: 'Hicklin\'s Water Edge Marine',
-        imageUrl: 'assets/boats/yamaha-ar250-2023.png',
+        imageUrl: '/boats/yamaha-ar250-2023.png',
     },
     {
         id: 8,
@@ -185,7 +185,7 @@ const sampleBoats = [
         price: 499000, // USD
         location: 'Virginia Beach, VA',
         dealership: 'Bluewater Yacht Sales',
-        imageUrl: 'assets/boats/cabo-43-convertible-2008.png',
+        imageUrl: '/boats/cabo-43-convertible-2008.png',
     },
     {
         id: 9,
@@ -222,7 +222,7 @@ const sampleBoats = [
         price: 189900,
         location: 'Sagaponack, NY',
         dealership: 'Strong\'s Marine',
-        imageUrl: 'assets/boats/cobalt-r8-surf-2021.png'
+        imageUrl: '/boats/cobalt-r8-surf-2021.png'
     },
     {
         id: 10,
@@ -260,7 +260,7 @@ const sampleBoats = [
         price: 889683,
         location: 'Beaufort, NC',
         dealership: 'Bluewater Yacht Sales',
-        imageUrl: 'assets/boats/everglades-395cc-2024.png'
+        imageUrl: '/boats/everglades-395cc-2024.png'
     },
     {
         id: 11,
@@ -292,7 +292,7 @@ const sampleBoats = [
         price: 15899,
         location: 'Various Dealerships',
         dealership: 'Yamaha Authorized Dealers',
-        imageUrl: 'assets/boats/yamaha-waverunner-gp-ho-2024.png'
+        imageUrl: '/boats/yamaha-waverunner-gp-ho-2024.png'
     }
 ];
 

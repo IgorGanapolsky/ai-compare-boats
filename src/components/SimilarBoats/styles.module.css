@@ -1,6 +1,5 @@
 .container {
-  width: 100%;
-  padding: 0 24px;
+  margin-top: 24px;
 }
 
 .header {
@@ -12,7 +11,7 @@
 
 .title {
   font-family: 'Inter', sans-serif;
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: #111827;
   margin: 0;
@@ -25,20 +24,17 @@
 }
 
 .sortBy span {
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
   color: #6B7280;
+  font-size: 14px;
 }
 
 .sortSelect {
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  color: #111827;
-  padding: 6px 12px;
+  padding: 8px;
   border: 1px solid #E5E7EB;
-  border-radius: 6px;
-  background: white;
-  cursor: pointer;
+  border-radius: 4px;
+  background-color: white;
+  color: #111827;
+  font-size: 14px;
 }
 
 .boatsGrid {
@@ -49,18 +45,21 @@
 
 .boatCard {
   background: white;
-  border: 1px solid #E5E7EB;
-  border-radius: 12px;
+  border-radius: 8px;
   overflow: hidden;
+  border: 1px solid #E5E7EB;
 }
 
 .imageContainer {
   position: relative;
   width: 100%;
-  height: 200px;
+  padding-top: 75%; /* 4:3 aspect ratio */
 }
 
 .boatImage {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -68,35 +67,20 @@
 
 .matchBadge {
   position: absolute;
-  top: 12px;
-  left: 12px;
-  padding: 4px 12px;
-  border-radius: 16px;
+  top: 8px;
+  left: 8px;
+  padding: 4px 8px;
+  background: #EFF6FF;
+  color: #2563EB;
+  border-radius: 12px;
   font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: white;
-}
-
-/* Match badge colors */
-.matchBadge[data-match="high"] {
-  background: #059669;
-}
-
-.matchBadge[data-match="medium"] {
-  background: #047857;
-}
-
-.matchBadge[data-match="low"] {
-  background: #F59E0B;
+  font-size: 12px;
+  font-weight: 500;
+  z-index: 1;
 }
 
 .boatInfo {
   padding: 16px;
-}
-
-.nameLocation {
-  margin-bottom: 12px;
 }
 
 .boatName {
@@ -111,14 +95,14 @@
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: #6B7280;
-  margin: 0;
+  margin: 0 0 16px 0;
 }
 
 .specs {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  margin-bottom: 16px;
+  margin-bottom: 12px;
 }
 
 .spec {
@@ -137,73 +121,68 @@
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   color: #111827;
+  font-weight: 500;
 }
 
 .details {
-  margin-bottom: 16px;
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 16px;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  font-size: 0.875rem;
 }
 
-.engineInfo,
-.hullInfo {
+.engineInfo, .hullInfo {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.25rem;
 }
 
 .features {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 16px;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
 }
 
 .feature {
+  background-color: #F3F4F6;
   padding: 4px 12px;
-  background: #F3F4F6;
-  border-radius: 16px;
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: #374151;
+  border-radius: 100px;
+  font-size: 0.75rem;
+  color: #4B5563;
 }
 
 .moreFeatures {
-  font-family: 'Inter', sans-serif;
-  font-size: 14px;
-  font-weight: 400;
-  color: #2563EB;
-  background: #EFF6FF;
+  background: none;
   border: none;
-  padding: 4px 12px;
-  border-radius: 16px;
+  color: #2563EB;
+  font-size: 0.75rem;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.moreFeatures:hover {
-  background: #DBEAFE;
+  padding: 4px 8px;
 }
 
 .expandedFeatures {
-  margin-top: 8px;
-  display: grid;
-  gap: 8px;
-  grid-template-rows: 0fr;
-  transition: grid-template-rows 0.2s ease-out;
+  display: none;
+  width: 100%;
+  margin-top: 0.5rem;
 }
 
 .expandedFeatures.expanded {
-  grid-template-rows: 1fr;
+  display: block;
 }
 
 .expandedContent {
-  overflow: hidden;
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 0.5rem;
+}
+
+.price {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #1A1A1A;
+  margin-top: 1rem;
 }
 
 .popupOverlay {
@@ -267,12 +246,4 @@
   flex-wrap: wrap;
   gap: 8px;
   max-height: 60vh;
-}
-
-.price {
-  font-family: 'Inter', sans-serif;
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
-  text-align: right;
 }

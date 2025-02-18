@@ -72,7 +72,14 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
         </div>
       </div>
 
-      <SimilarBoats currentBoatType={detectedType} />
+      <SimilarBoats currentBoat={{
+        type: detectedType,
+        length: parseFloat(estimatedSize?.match(/\d+/)?.[0] || '0'),
+        features: keyFeatures,
+        style,
+        styleDetails,
+        year: new Date().getFullYear()
+      }} />
     </div>
   );
 };
