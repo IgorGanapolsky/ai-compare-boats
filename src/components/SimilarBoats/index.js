@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from './styles.module.css';
 import sampleBoats from '../../data/sampleBoats';
 
@@ -56,6 +56,39 @@ const calculateMatchPercentage = (currentBoat, sampleBoat) => {
   return Math.round(matchScore * 100);
 };
 
+const BoatFeatures = ({ features = [] }) => {
+  const [isExpanded, setIsExpanded] = useState(false);
+  const visibleFeatures = features.slice(0, 4);
+  const remainingCount = Math.max(0, features.length - 4);
+
+  return (
+    <div className={styles.features}>
+      {visibleFeatures.map((feature, idx) => (
+        <span key={`feature-${idx}`} className={styles.feature}>
+          {feature}
+        </span>
+      ))}
+      {remainingCount > 0 && (
+        <button 
+          className={styles.moreFeatures}
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          +{remainingCount} more
+        </button>
+      )}
+      {isExpanded && (
+        <div className={styles.expandedFeatures}>
+          {features.slice(4).map((feature, idx) => (
+            <span key={`expanded-${idx}`} className={styles.feature}>
+              {feature}
+            </span>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const SimilarBoats = ({ currentBoat }) => {
   console.log('Current boat:', currentBoat);
 
@@ -95,7 +128,10 @@ const SimilarBoats = ({ currentBoat }) => {
         {similarBoats.map((boat) => (
           <div key={boat.id} className={styles.boatCard}>
             <div className={styles.imageContainer}>
-              <div className={styles.matchBadge}>
+              <div 
+                className={styles.matchBadge}
+                data-match={boat.matchPercentage >= 90 ? "high" : boat.matchPercentage >= 80 ? "medium" : "low"}
+              >
                 {boat.matchPercentage}% Match
               </div>
               <img 
@@ -113,7 +149,7 @@ const SimilarBoats = ({ currentBoat }) => {
               <div className={styles.specs}>
                 <div className={styles.spec}>
                   <span className={styles.label}>Size</span>
-                  <span className={styles.value}>{boat.size}</span>
+                  <span className={styles.value}>{boat.length} ft</span>
                 </div>
                 <div className={styles.spec}>
                   <span className={styles.label}>Type</span>
@@ -128,8 +164,14 @@ const SimilarBoats = ({ currentBoat }) => {
                 </div>
                 <div className={styles.spec}>
                   <span className={styles.label}>Hull</span>
-                  <span className={styles.value}>{boat.hull}</span>
+                  <span className={styles.value}>{boat.hullMaterial}</span>
                 </div>
+              </div>
+
+              <BoatFeatures features={boat.features} />
+
+              <div className={styles.price}>
+                ${new Intl.NumberFormat('en-US').format(boat.price)}
               </div>
             </div>
           </div>

@@ -1,5 +1,5 @@
 .container {
-  margin-top: 24px;
+  margin-top: 32px;
 }
 
 .header {
@@ -24,17 +24,19 @@
 }
 
 .sortBy span {
-  color: #6B7280;
+  font-family: 'Inter', sans-serif;
   font-size: 14px;
+  color: #6B7280;
 }
 
 .sortSelect {
-  padding: 8px;
+  padding: 8px 12px;
   border: 1px solid #E5E7EB;
-  border-radius: 4px;
+  border-radius: 8px;
   background-color: white;
   color: #111827;
   font-size: 14px;
+  font-family: 'Inter', sans-serif;
 }
 
 .boatsGrid {
@@ -45,7 +47,7 @@
 
 .boatCard {
   background: white;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
   border: 1px solid #E5E7EB;
 }
@@ -53,13 +55,10 @@
 .imageContainer {
   position: relative;
   width: 100%;
-  padding-top: 75%; /* 4:3 aspect ratio */
+  height: 240px; /* Fixed height for consistent image size */
 }
 
 .boatImage {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -67,16 +66,16 @@
 
 .matchBadge {
   position: absolute;
-  top: 8px;
-  left: 8px;
-  padding: 4px 8px;
-  background: #EFF6FF;
-  color: #2563EB;
-  border-radius: 12px;
+  top: 12px;
+  right: 12px;
+  padding: 6px 12px;
+  border-radius: 100px;
   font-family: 'Inter', sans-serif;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
+  color: white;
   z-index: 1;
+  background-color: #10B981;
 }
 
 .boatInfo {
@@ -102,7 +101,7 @@
   display: grid;
   grid-template-columns: repeat(2, 1fr);
   gap: 16px;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
 }
 
 .spec {
@@ -115,6 +114,7 @@
   font-family: 'Inter', sans-serif;
   font-size: 12px;
   color: #6B7280;
+  text-transform: capitalize;
 }
 
 .value {
@@ -122,6 +122,27 @@
   font-size: 14px;
   color: #111827;
   font-weight: 500;
+}
+
+.price {
+  font-family: 'Inter', sans-serif;
+  font-size: 18px;
+  font-weight: 600;
+  color: #111827;
+  margin-top: 16px;
+}
+
+/* Match badge colors based on percentage */
+.matchBadge[data-match="high"] {
+  background-color: #10B981; /* Green */
+}
+
+.matchBadge[data-match="medium"] {
+  background-color: #F59E0B; /* Yellow */
+}
+
+.matchBadge[data-match="low"] {
+  background-color: #EF4444; /* Red */
 }
 
 .details {
@@ -141,31 +162,46 @@
 .features {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
+  gap: 8px;
+  margin: 16px 0;
 }
 
 .feature {
-  background-color: #F3F4F6;
+  display: inline-flex;
+  align-items: center;
   padding: 4px 12px;
+  background: #F3F4F6;
   border-radius: 100px;
-  font-size: 0.75rem;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
   color: #4B5563;
+  white-space: nowrap;
 }
 
 .moreFeatures {
-  background: none;
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  background: #EFF6FF;
   border: none;
+  border-radius: 100px;
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
   color: #2563EB;
-  font-size: 0.75rem;
   cursor: pointer;
-  padding: 4px 8px;
+  white-space: nowrap;
+}
+
+.moreFeatures:hover {
+  background: #DBEAFE;
 }
 
 .expandedFeatures {
-  display: none;
   width: 100%;
-  margin-top: 0.5rem;
+  margin-top: 8px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .expandedFeatures.expanded {
@@ -176,13 +212,6 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.5rem;
-}
-
-.price {
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1A1A1A;
-  margin-top: 1rem;
 }
 
 .popupOverlay {
