@@ -1,6 +1,5 @@
 import React from 'react';
 import styles from './styles.module.css';
-import { calculateMatchScore } from '../../utils/boatMatching';
 
 const DetailedComparison = ({ currentBoat, comparisonBoat, onClose }) => {
   const getLengthAnalysis = () => {
@@ -22,27 +21,22 @@ const DetailedComparison = ({ currentBoat, comparisonBoat, onClose }) => {
   };
 
   const getFeatureAnalysis = () => {
-    // Normalize feature text for better matching
     const normalizeFeature = (feature) => feature.toLowerCase()
       .replace(/[^a-z0-9\s]/g, '')
-      .replace(/for|with|and|the|a|an/g, '') // Remove common words
+      .replace(/for|with|and|the|a|an/g, '')
       .trim();
 
-    // Extract features from OpenAI analysis text if available
     const extractFeaturesFromAnalysis = (boat) => {
       const features = new Set();
       
-      // Add explicit features
       if (Array.isArray(boat.features)) {
         boat.features.forEach(f => features.add(normalizeFeature(f)));
       }
 
-      // Add features from keyFeatures if available (from OpenAI analysis)
       if (Array.isArray(boat.keyFeatures)) {
         boat.keyFeatures.forEach(f => features.add(normalizeFeature(f)));
       }
 
-      // Add style features if available
       if (Array.isArray(boat.style)) {
         boat.style.forEach(s => features.add(normalizeFeature(s)));
       }
@@ -53,27 +47,20 @@ const DetailedComparison = ({ currentBoat, comparisonBoat, onClose }) => {
     const currentFeatures = extractFeaturesFromAnalysis(currentBoat);
     const comparisonFeatures = extractFeaturesFromAnalysis(comparisonBoat);
 
-    // Improved feature matching logic
     const findSimilarFeatures = (feature, targetSet) => {
       return [...targetSet].some(target => {
-        // Direct match
         if (feature === target) return true;
-
-        // Substring match
         if (feature.includes(target) || target.includes(feature)) return true;
 
-        // Word similarity match
         const featureWords = feature.split(' ');
         const targetWords = target.split(' ');
         
-        // Count matching words
         const commonWords = featureWords.filter(word => 
           targetWords.some(targetWord => 
             targetWord.includes(word) || word.includes(targetWord)
           )
         );
 
-        // Calculate similarity score
         const similarityScore = commonWords.length / Math.max(featureWords.length, targetWords.length);
         return similarityScore >= 0.5;
       });
@@ -113,7 +100,6 @@ const DetailedComparison = ({ currentBoat, comparisonBoat, onClose }) => {
 
   const lengthAnalysis = getLengthAnalysis();
   const featureAnalysis = getFeatureAnalysis();
-  const overallMatchScore = calculateMatchScore(currentBoat, comparisonBoat);
 
   const renderSpecification = (label, value, matchPercentage) => {
     const matchLevel = getMatchLevel(matchPercentage);
@@ -131,7 +117,7 @@ const DetailedComparison = ({ currentBoat, comparisonBoat, onClose }) => {
   };
 
   const renderFeatureTag = (feature, type) => (
-    <span className={`${styles.featureTag} ${styles[type]}`}>
+    <span key={feature} className={`${styles.featureTag} ${styles[type]}`}>
       {feature}
     </span>
   );
@@ -148,13 +134,12 @@ const DetailedComparison = ({ currentBoat, comparisonBoat, onClose }) => {
           <div className={styles.boatImages}>
             <div className={styles.boatSection}>
               <h3>Your Reference Boat</h3>
-              <img src={currentBoat.imageUrl} alt="Reference boat" />
+              {currentBoat.imageUrl && (
+                <img src={currentBoat.imageUrl} alt="Reference boat" />
+              )}
             </div>
             <div className={styles.boatSection}>
               <h3>{comparisonBoat.name}</h3>
-              <div className={styles.matchScoreBadge}>
-                {overallMatchScore}% Overall Match
-              </div>
               <img src={comparisonBoat.imageUrl} alt={comparisonBoat.name} />
             </div>
           </div>

@@ -3,7 +3,7 @@ import './BoatAnalysisResults.css';
 import SimilarBoats from './SimilarBoats';
 import { RefreshIcon } from './icons/RefreshIcon';
 
-const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
+const BoatAnalysisResults = ({ results, imagePreview, onReset, setSelectedBoat, setShowComparison }) => {
   const {
     detectedType,
     estimatedSize,
@@ -11,6 +11,17 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
     style = [],
     styleDetails = ''
   } = results;
+
+  const currentBoat = {
+    name: 'Your Reference Boat',
+    type: detectedType,
+    size: estimatedSize,
+    keyFeatures,
+    description: styleDetails,
+    imageUrl: imagePreview,
+    features: keyFeatures,
+    style
+  };
 
   return (
     <div className="boat-analysis-results">
@@ -72,14 +83,11 @@ const BoatAnalysisResults = ({ results, imagePreview, onReset }) => {
         </div>
       </div>
 
-      <SimilarBoats currentBoat={{
-        type: detectedType,
-        length: parseFloat(estimatedSize?.match(/\d+/)?.[0] || '0'),
-        features: keyFeatures,
-        style,
-        styleDetails,
-        year: new Date().getFullYear()
-      }} />
+      <SimilarBoats 
+        currentBoat={currentBoat}
+        setSelectedBoat={setSelectedBoat}
+        setShowComparison={setShowComparison}
+      />
     </div>
   );
 };
