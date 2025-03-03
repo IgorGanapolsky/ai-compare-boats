@@ -315,3 +315,83 @@
   flex-direction: column;
   gap: 0.25rem;
 }
+
+/* Loading spinner */
+.loadingSpinner {
+  width: 50px;
+  height: 50px;
+  border: 5px solid rgba(0, 100, 200, 0.1);
+  border-radius: 50%;
+  border-top-color: #0066cc;
+  animation: spin 1s linear infinite;
+  margin: 20px auto;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Error handling UI */
+.errorNotice {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #fff8f8;
+  border: 1px solid #ffd6d6;
+  border-radius: 8px;
+  color: #d32f2f;
+}
+
+.apiErrorBanner {
+  width: 100%;
+  padding: 10px 15px;
+  background-color: #fff8f8;
+  border: 1px solid #ffd6d6;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  color: #d32f2f;
+  font-size: 14px;
+  transition: max-height 0.3s ease, opacity 0.3s ease;
+}
+
+.apiErrorBanner.expanded {
+  padding-bottom: 15px;
+}
+
+.errorToggle {
+  background: none;
+  border: none;
+  color: #0066cc;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 14px;
+  margin-left: 10px;
+  padding: 0;
+}
+
+.errorList {
+  margin-top: 10px;
+  padding-left: 20px;
+  font-size: 13px;
+  color: #666;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+.errorList li {
+  margin-bottom: 5px;
+}
+
+/* Make the no matches state more user-friendly */
+.noMatches {
+  text-align: center;
+  padding: 30px;
+  background-color: #f5f7fa;
+  border-radius: 8px;
+  margin: 20px 0;
+  color: #555;
+}
+
+.noMatches p {
+  font-size: 18px;
+  margin-bottom: 15px;
+}

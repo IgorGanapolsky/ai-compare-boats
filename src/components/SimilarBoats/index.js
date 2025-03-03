@@ -1,9 +1,10 @@
-import React, {useState, useMemo, useCallback, useEffect, useRef} from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import {calculateMatchScore} from '../../utils/boatMatching';
-import sampleBoats from '../../data/sampleBoats';
-import DetailedComparison from '../DetailedComparison';
+import { useAllBoats } from '../../hooks/useAllBoats';
 import styles from './styles.module.css';
+import { calculateMatchScore } from '../../utils/boatMatching';
+import DetailedComparison from '../DetailedComparison';
+import ErrorHandler from '../ErrorHandler';
 
 /**
  * SimilarBoats component displays the top 3 boats similar to the current boat.
@@ -18,6 +19,8 @@ const SimilarBoats = ({currentBoat}) => {
     const [loading, setLoading] = useState(false);
     const [resultsVersion, setResultsVersion] = useState(0); // Add a version to force re-renders
     const [imgErrors, setImgErrors] = useState({});
+    const [apiErrors, setApiErrors] = useState([]);
+    const [showErrorDetails, setShowErrorDetails] = useState(false);
 
     // Cache for storing calculated match results
     const matchResultsCache = useRef({
@@ -28,6 +31,9 @@ const SimilarBoats = ({currentBoat}) => {
     // This gives us a proper dependency for useMemo
     const [filteredResults, setFilteredResults] = useState([]);
 
+    // Call useAllBoats at the top level
+    const { allBoats } = useAllBoats();
+
     // Update derived state when cache or version changes
     useEffect(() => {
         setFilteredResults(matchResultsCache.current.results);
@@ -35,9 +41,9 @@ const SimilarBoats = ({currentBoat}) => {
 
     // Get potential similar boats excluding the current boat
     const filteredBoats = useMemo(() => {
-        if (!currentBoat) return [];
-        return sampleBoats.filter(boat => boat.id !== currentBoat.id);
-    }, [currentBoat]);
+        if (!currentBoat || !allBoats) return [];
+        return allBoats.filter(boat => boat.id !== currentBoat.id);
+    }, [currentBoat, allBoats]);
 
     // Get the sorted boats to display based on the current sort criteria
     const displayedBoats = useMemo(() => {
@@ -109,9 +115,11 @@ const SimilarBoats = ({currentBoat}) => {
             }
 
             setLoading(true);
+            setApiErrors([]); // Clear previous errors
 
             try {
                 const boatsWithScores = [];
+                const newErrors = [];
 
                 // Calculate match scores for each boat
                 for (const boat of filteredBoats) {
@@ -123,11 +131,25 @@ const SimilarBoats = ({currentBoat}) => {
                             ...boat, matchScore
                         });
                     } catch (error) {
+                        // Record the error but continue processing other boats
                         console.error(`Error calculating match score for boat ${boat.id}:`, error);
+                        newErrors.push({
+                            boatId: boat.id,
+                            boatName: boat.name,
+                            message: error.message || 'Unknown error during matching',
+                            type: error.type || 'general_error'
+                        });
+                        
+                        // Still add the boat with a fallback score
                         boatsWithScores.push({
-                            ...boat, matchScore: 0
+                            ...boat, matchScore: 50 // Use 50% as a middle-ground fallback
                         });
                     }
+                }
+                
+                // Update error state if any occurred
+                if (newErrors.length > 0) {
+                    setApiErrors(newErrors);
                 }
 
                 // Update the cache with full results (sorted by match score)
@@ -137,6 +159,11 @@ const SimilarBoats = ({currentBoat}) => {
                 setResultsVersion(v => v + 1); // Increment version to trigger re-render
             } catch (error) {
                 console.error('Error processing similar boats:', error);
+                setApiErrors([{ 
+                    boatId: 'global',
+                    message: 'Failed to process matches: ' + (error.message || 'Unknown error'),
+                    type: error.type || 'general_error'
+                }]);
                 matchResultsCache.current = {currentBoatId: null, results: []};
                 setResultsVersion(v => v + 1); // Increment version to trigger re-render
             } finally {
@@ -192,19 +219,57 @@ const SimilarBoats = ({currentBoat}) => {
         }
     }, [handleImageError]);
 
+    // Handle retry of match calculations
+    const handleRetryMatches = () => {
+        // Force recalculation by resetting currentBoatId
+        if (matchResultsCache.current) {
+            matchResultsCache.current.currentBoatId = null;
+        }
+        // Clear errors
+        setApiErrors([]);
+        // Force recalculation by updating the version
+        setResultsVersion(v => v + 1);
+    };
+
+    // Dismiss all errors
+    const handleDismissErrors = () => {
+        setApiErrors([]);
+    };
+
     // Render the content based on loading and data states
     const renderContent = () => {
         if (loading) {
             return (<div className={styles.loadingContainer}>
                 <p>Calculating matches...</p>
+                <div className={styles.loadingSpinner}></div>
             </div>);
         }
 
         if (displayedBoats.length === 0) {
-            return <p className={styles.noMatches}>No similar boats found</p>;
+            return (<div className={styles.noMatches}>
+                <p>No similar boats found</p>
+                {apiErrors.length > 0 && (
+                    <ErrorHandler 
+                        errors={apiErrors}
+                        onRetry={handleRetryMatches}
+                        onDismiss={handleDismissErrors}
+                        showDetails={showErrorDetails}
+                        onToggleDetails={() => setShowErrorDetails(!showErrorDetails)}
+                    />
+                )}
+            </div>);
         }
 
         return (<div className={styles.boatGrid}>
+            {apiErrors.length > 0 && (
+                <ErrorHandler 
+                    errors={apiErrors}
+                    onRetry={handleRetryMatches}
+                    onDismiss={handleDismissErrors}
+                    showDetails={showErrorDetails}
+                    onToggleDetails={() => setShowErrorDetails(!showErrorDetails)}
+                />
+            )}
             {displayedBoats.map(boat => (<button
                 key={boat.id}
                 className={`${styles.boatCard} ${selectedBoat === boat ? styles.selectedCard : ''}`}

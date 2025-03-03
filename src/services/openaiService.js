@@ -1,17 +1,116 @@
 import OpenAI from 'openai';
 
+// Maximum number of retries for API calls
+const MAX_RETRIES = 3;
+// Delay between retries (exponential backoff)
+const RETRY_DELAY = 1000;
+
+// More specific error types for better handling
+export const OPENAI_ERROR_TYPES = {
+  CONNECTION_ERROR: 'connection_error',
+  RATE_LIMIT_ERROR: 'rate_limit_error',
+  TIMEOUT_ERROR: 'timeout_error',
+  AUTH_ERROR: 'authentication_error',
+  INVALID_REQUEST: 'invalid_request',
+  SERVER_ERROR: 'server_error',
+  UNKNOWN_ERROR: 'unknown_error'
+};
+
+/**
+ * Create a structured error with additional information
+ */
+const createOpenAIError = (message, type = OPENAI_ERROR_TYPES.UNKNOWN_ERROR, originalError = null) => {
+  const error = new Error(message);
+  error.type = type;
+  error.originalError = originalError;
+  return error;
+};
+
+/**
+ * Analyzes the type of error from OpenAI response
+ */
+const getErrorType = (error) => {
+  const message = error?.message?.toLowerCase() || '';
+  const status = error?.response?.status;
+  
+  if (message.includes('rate limit') || status === 429) {
+    return OPENAI_ERROR_TYPES.RATE_LIMIT_ERROR;
+  }
+  
+  if (message.includes('timeout') || message.includes('timed out')) {
+    return OPENAI_ERROR_TYPES.TIMEOUT_ERROR;
+  }
+  
+  if (message.includes('api key') || message.includes('authentication') || status === 401) {
+    return OPENAI_ERROR_TYPES.AUTH_ERROR;
+  }
+  
+  if (status >= 400 && status < 500) {
+    return OPENAI_ERROR_TYPES.INVALID_REQUEST;
+  }
+  
+  if (status >= 500) {
+    return OPENAI_ERROR_TYPES.SERVER_ERROR;
+  }
+  
+  if (message.includes('network') || message.includes('connection') || message.includes('fetch')) {
+    return OPENAI_ERROR_TYPES.CONNECTION_ERROR;
+  }
+  
+  return OPENAI_ERROR_TYPES.UNKNOWN_ERROR;
+};
+
+// Create a more robust OpenAI client configuration
 const openai = new OpenAI({
   apiKey: process.env.REACT_APP_OPENAI_API_KEY,
-  dangerouslyAllowBrowser: true
+  dangerouslyAllowBrowser: true,
+  timeout: 30000, // 30 second timeout
+  maxRetries: 2,  // OpenAI's built-in retries
 });
 
+// Validate API key on load
 if (!process.env.REACT_APP_OPENAI_API_KEY) {
-  throw new Error('OpenAI API key is not configured. Please add REACT_APP_OPENAI_API_KEY to your environment variables.');
+  console.error('OpenAI API key is not configured. Using fallback analysis mode.');
 }
+
+// Helper function to implement retry logic with exponential backoff
+const callWithRetry = async (apiFunction, maxRetries = MAX_RETRIES) => {
+  let lastError;
+  
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await apiFunction();
+    } catch (error) {
+      lastError = error;
+      console.warn(`API attempt ${attempt + 1}/${maxRetries} failed:`, error.message);
+      
+      // Don't retry if it's an authorization error
+      if (error.status === 401 || error.status === 403) {
+        throw new Error('API authorization failed. Check your API key.');
+      }
+      
+      // Don't retry if the model is overloaded - just wait longer
+      if (error.status === 429 || error.message.includes('overloaded')) {
+        console.log('OpenAI API is overloaded, waiting longer before retry');
+        await new Promise(r => setTimeout(r, RETRY_DELAY * 3 * (attempt + 1)));
+      } else {
+        // Standard exponential backoff
+        await new Promise(r => setTimeout(r, RETRY_DELAY * (attempt + 1)));
+      }
+    }
+  }
+  
+  throw createOpenAIError(`API failed after ${maxRetries} attempts: ${lastError.message}`, getErrorType(lastError), lastError);
+};
 
 export const analyzeBoatImage = async (file, onProgress) => {
   try {
     onProgress?.('Starting analysis process...');
+    
+    // Validate API key
+    if (!process.env.REACT_APP_OPENAI_API_KEY) {
+      throw createOpenAIError('Missing API key - using fallback mode', OPENAI_ERROR_TYPES.AUTH_ERROR);
+    }
     
     // Convert file to base64
     const base64Image = await new Promise((resolve, reject) => {
@@ -21,6 +120,7 @@ export const analyzeBoatImage = async (file, onProgress) => {
       reader.readAsDataURL(file);
     });
 
+    onProgress?.('Preparing image for analysis...');
     console.log('Image prepared for OpenAI API');
 
     const prompt = `Analyze this boat image and provide a detailed classification. You MUST be specific about hull material and engine configuration.
@@ -76,13 +176,15 @@ Look carefully at the transom, hull sides, and overall construction to determine
       }
     ];
 
+    onProgress?.('Sending image to AI for analysis...');
     console.log('Sending request to OpenAI');
-    const response = await openai.chat.completions.create({
+    
+    // Use the retry function for the API call
+    const response = await callWithRetry(() => openai.chat.completions.create({
       model: "gpt-4o",
-      messages,
-      max_tokens: 800,
-      temperature: 0.2
-    });
+      messages: messages,
+      max_tokens: 1000
+    }));
 
     const analysis = response.choices[0].message.content;
     console.log('Raw analysis:', analysis);
@@ -117,7 +219,7 @@ Look carefully at the transom, hull sides, and overall construction to determine
     return results;
   } catch (error) {
     console.error('Error analyzing image:', error);
-    throw error;
+    throw createOpenAIError(`Error analyzing image: ${error.message}`, getErrorType(error), error);
   }
 };
 
@@ -171,18 +273,18 @@ Focus on:
     console.log('OpenAI: Starting boat comparison');
 
     try {
-      const response = await openai.chat.completions.create({
+      const response = await callWithRetry(() => openai.chat.completions.create({
         model: "gpt-4o",
         messages,
         max_tokens: 500,
         temperature: 0.5
-      });
+      }));
 
       console.log('Received response from OpenAI');
 
       if (!response.choices?.[0]?.message?.content) {
         console.error('OpenAI: Invalid comparison response');
-        throw new Error('Invalid response from OpenAI comparison');
+        throw createOpenAIError('Invalid response from OpenAI comparison', OPENAI_ERROR_TYPES.INVALID_REQUEST);
       }
 
       console.log('OpenAI: Comparison complete');
@@ -194,14 +296,14 @@ Focus on:
     } catch (error) {
       console.error('OpenAI API Error:', error);
       if (error.response?.status === 401) {
-        throw new Error('Invalid OpenAI API key. Please check your configuration.');
+        throw createOpenAIError('Invalid OpenAI API key. Please check your configuration.', OPENAI_ERROR_TYPES.AUTH_ERROR, error);
       } else {
-        throw new Error('Failed to compare boats. Please try again.');
+        throw createOpenAIError('Failed to compare boats. Please try again.', getErrorType(error), error);
       }
     }
 
   } catch (error) {
     console.error('❌ Error during comparison', error);
-    throw error;
+    throw createOpenAIError(`Error during comparison: ${error.message}`, getErrorType(error), error);
   }
 }
