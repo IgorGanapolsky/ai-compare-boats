@@ -1,4 +1,4 @@
-.container {
+.similarBoatsContainer {
   margin: 2rem 0;
   background-color: #fff;
   border-radius: 10px;
@@ -9,27 +9,21 @@
   margin: 0 auto;
 }
 
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5rem;
-}
-
-.title {
+.similarBoatsContainer h2 {
   font-size: 1.5rem;
-  margin: 0;
+  margin: 0 0 1.5rem 0;
   color: #333;
   font-weight: 600;
 }
 
-.sortOptions {
+.sortControls {
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  margin-bottom: 2rem;
 }
 
-.sortSelector {
+.sortSelect {
   padding: 0.5rem;
   border: 1px solid #e2e8f0;
   border-radius: 4px;
@@ -40,307 +34,128 @@
   cursor: pointer;
 }
 
-/* Placeholder state when no boat is selected */
-.placeholder {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 200px;
+.noBoatSelected, .noMatches {
+  text-align: center;
+  padding: 3rem;
+  color: #64748b;
+  font-size: 1.1rem;
   background-color: #f8fafc;
-  border-radius: 10px;
+  border-radius: 8px;
   border: 2px dashed #e2e8f0;
-  margin: 2rem 0;
+}
+
+.loadingContainer {
+  text-align: center;
   padding: 2rem;
 }
 
-.placeholderContent {
-  text-align: center;
-  max-width: 400px;
-}
-
-.placeholderContent h3 {
-  margin-top: 0;
-  color: #334155;
-}
-
-.placeholderContent p {
-  color: #64748b;
-}
-
-/* Grid for displaying similar boats */
-.boatsGrid {
+/* Grid layout for the boat cards */
+.boatGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 1.5rem;
-  margin-top: 1rem;
 }
 
+@media (max-width: 1024px) {
+  .boatGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .boatGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Styling for each boat card */
 .boatCard {
   border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s ease, box-shadow 0.3s ease;
-  background-color: #fff;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+  cursor: pointer;
+  background-color: white;
 }
 
 .boatCard:hover {
   transform: translateY(-5px);
-  box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
 }
 
-.imageContainer {
+.selectedCard {
+  border: 3px solid #3b82f6;
+  transform: translateY(-5px);
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
+}
+
+/* Boat image container with match badge */
+.boatImageContainer {
   position: relative;
-  width: 100%;
-  padding-top: 66.67%; /* 3:2 aspect ratio */
+  height: 180px;
   overflow: hidden;
 }
 
 .boatImage {
-  position: absolute;
-  top: 0;
-  left: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.3s ease;
+  transition: transform 0.5s ease;
 }
 
 .boatCard:hover .boatImage {
   transform: scale(1.05);
 }
 
+/* Match percentage badge */
 .matchBadge {
   position: absolute;
   top: 10px;
   right: 10px;
-  background-color: #f00;
+  background-color: rgba(0, 0, 0, 0.7);
   color: white;
-  padding: 5px 12px;
-  border-radius: 4px;
-  font-size: 0.85rem;
+  padding: 4px 8px;
+  border-radius: 20px;
+  font-size: 0.9rem;
   font-weight: 600;
   z-index: 2;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
+/* Color coding for match percentages */
+.highMatch {
+  color: #10b981; /* Green for high matches */
+}
+
+.mediumMatch {
+  color: #f59e0b; /* Orange for medium matches */
+}
+
+.lowMatch {
+  color: #ef4444; /* Red for low matches */
+}
+
+/* Boat info section */
 .boatInfo {
-  padding: 1.25rem;
-  display: flex;
-  flex-direction: column;
-  flex-grow: 1;
-}
-
-.boatName {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.25rem;
-  font-weight: 600;
-  color: #1e293b;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.location {
-  color: #64748b;
-  font-size: 0.9rem;
-  margin: 0 0 1rem 0;
-  display: flex;
-  align-items: center;
-}
-
-.location::before {
-  content: "📍";
-  margin-right: 5px;
-}
-
-.specs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 0.75rem;
-  margin-bottom: 1rem;
-}
-
-.spec {
-  display: flex;
-  flex-direction: column;
-}
-
-.label {
-  font-size: 0.75rem;
-  color: #64748b;
-  margin-bottom: 0.25rem;
-}
-
-.value {
-  font-size: 0.9rem;
-  color: #334155;
-  font-weight: 500;
-}
-
-.features {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  position: relative;
-}
-
-.feature {
-  background-color: #f1f5f9;
-  color: #334155;
-  padding: 0.25rem 0.75rem;
-  border-radius: 15px;
-  font-size: 0.75rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-}
-
-.moreFeatures {
-  background-color: #e2e8f0;
-  color: #475569;
-  padding: 0.25rem 0.75rem;
-  border-radius: 15px;
-  font-size: 0.75rem;
-  border: none;
-  cursor: pointer;
-  transition: background-color 0.2s ease;
-}
-
-.moreFeatures:hover {
-  background-color: #cbd5e1;
-}
-
-.expandedFeatures {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
-  background-color: white;
   padding: 1rem;
-  border-radius: 10px;
-  box-shadow: 0 10px 15px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
 }
 
-.price {
-  margin-top: auto;
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #0f172a;
-}
-
-.placeholder {
-  text-align: center;
-  padding: 2rem;
-  color: #64748b;
+.boatInfo h3 {
+  margin: 0 0 0.5rem 0;
   font-size: 1.1rem;
+  color: #1e293b;
+  font-weight: 600;
+  line-height: 1.3;
 }
 
-.noResults {
-  grid-column: 1 / -1;
-  text-align: center;
-  padding: 3rem;
-  background-color: #f8fafc;
-  border-radius: 10px;
-  border: 2px dashed #e2e8f0;
+.boatDetails {
+  color: #475569;
+  font-size: 0.95rem;
 }
 
-.noResults p {
-  color: #64748b;
-  font-size: 1.1rem;
-  margin: 0;
-}
-
-.noFeatures {
-  color: #94a3b8;
-  font-style: italic;
-  font-size: 0.8rem;
-}
-
-.popupOverlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-}
-
-.popup {
-  background: white;
-  border-radius: 8px;
-  width: 90%;
-  max-width: 600px;
-  max-height: 90vh;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-.popupHeader {
+.boatDetails p {
+  margin: 0.3rem 0;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  padding: 16px 24px;
-  border-bottom: 1px solid #E5E7EB;
-}
-
-.popupHeader h3 {
-  font-family: 'Inter', sans-serif;
-  font-size: 18px;
-  font-weight: 600;
-  color: #111827;
-  margin: 0;
-}
-
-.closeButton {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: #6B7280;
-  cursor: pointer;
-  padding: 0;
-  line-height: 1;
-}
-
-.closeButton:hover {
-  color: #111827;
-}
-
-.popupContent {
-  padding: 24px;
-  overflow-y: auto;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  max-height: 60vh;
-}
-
-.details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-}
-
-.engineInfo, .hullInfo {
-  display: flex;
-  flex-direction: column;
-  gap: 0.25rem;
 }
 
 .popupOverlay {
