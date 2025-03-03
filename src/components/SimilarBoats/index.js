@@ -1,223 +1,177 @@
-import React, { useState } from 'react';
-import styles from './styles.module.css';
+import React, { useState, useMemo, useCallback } from 'react';
+import { calculateMatchScore } from '../../utils/boatMatching';
 import sampleBoats from '../../data/sampleBoats';
 import DetailedComparison from '../DetailedComparison';
-import { calculateMatchScore } from '../../utils/boatMatching';
+import styles from './styles.module.css';
+import BoatFeatures from '../BoatFeatures';
 
-export const getFeatureAnalysis = (currentBoat, comparisonBoat) => {
-  // Extract features from boat descriptions and feature lists
-  const extractFeatures = (boat) => {
-    const features = new Set();
-    
-    // Add explicit features if they exist
-    if (Array.isArray(boat.features)) {
-      boat.features.forEach(f => features.add(f.trim()));
-    }
-    
-    // Extract features from description
-    const description = boat.description || '';
-    const addFeatureIfPresent = (feature) => {
-      if (description.toLowerCase().includes(feature.toLowerCase())) {
-        features.add(feature);
-      }
-    };
-
-    // Common boat features to look for
-    const commonFeatures = [
-      'Enclosed cabin',
-      'Hardtop',
-      'Rod holders',
-      'Navigation equipment',
-      'Deck space',
-      'Galley',
-      'Cabin',
-      'Fishing amenities',
-      'Air conditioning',
-      'Generator',
-      'Storage',
-      'Windshield',
-      'Seating'
-    ];
-
-    commonFeatures.forEach(addFeatureIfPresent);
-    
-    return features;
-  };
-
-  const currentFeatures = extractFeatures(currentBoat);
-  const comparisonFeatures = extractFeatures(comparisonBoat);
-  
-  // Find common features
-  const commonFeatures = [...currentFeatures].filter(x => 
-    [...comparisonFeatures].some(y => y.toLowerCase() === x.toLowerCase())
-  );
-  
-  // Find unique features for each boat
-  const uniqueToCurrentBoat = [...currentFeatures].filter(x => 
-    ![...comparisonFeatures].some(y => y.toLowerCase() === x.toLowerCase())
-  );
-  const uniqueToComparisonBoat = [...comparisonFeatures].filter(x => 
-    ![...currentFeatures].some(y => y.toLowerCase() === x.toLowerCase())
-  );
-  
-  const totalUniqueFeatures = uniqueToCurrentBoat.length + uniqueToComparisonBoat.length;
-  const featureMatchRate = commonFeatures.length > 0 ? 
-    Math.round((commonFeatures.length / (commonFeatures.length + totalUniqueFeatures)) * 100) : 0;
-  
-  return {
-    featureMatchRate,
-    commonFeatures,
-    uniqueToCurrentBoat,
-    uniqueToComparisonBoat,
-    commonFeaturesCount: commonFeatures.length,
-    uniqueFeaturesCount: totalUniqueFeatures
-  };
-};
-
-const getBoatLength = (boat) => {
-  if (boat.length) return boat.length;
-  if (boat.dimensions?.lengthOverall) {
-    const match = boat.dimensions.lengthOverall.match(/(\d+)/);
-    return match ? parseFloat(match[1]) : null;
-  }
-  if (typeof boat.size === 'string') {
-    const match = boat.size.match(/(\d+)/);
-    return match ? parseFloat(match[1]) : null;
-  }
-  return boat.size || null;
-};
-
-const formatBoatLength = (boat) => {
-  const length = getBoatLength(boat);
-  return length ? `${Math.round(length)} ft` : 'N/A';
-};
-
-const BoatFeatures = ({ features = [] }) => {
-  const [isExpanded, setIsExpanded] = useState(false);
-  const visibleFeatures = features.slice(0, 4);
-  const remainingCount = Math.max(0, features.length - 4);
-
-  return (
-    <div className={styles.features}>
-      {visibleFeatures.map((feature, idx) => (
-        <span key={`feature-${idx}`} className={styles.feature}>
-          {feature}
-        </span>
-      ))}
-      {remainingCount > 0 && (
-        <button 
-          className={styles.moreFeatures}
-          onClick={() => setIsExpanded(!isExpanded)}
-        >
-          +{remainingCount} more
-        </button>
-      )}
-      {isExpanded && (
-        <div className={styles.expandedFeatures}>
-          {features.slice(4).map((feature, idx) => (
-            <span key={`expanded-${idx}`} className={styles.feature}>
-              {feature}
-            </span>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-};
-
+/**
+ * SimilarBoats component displays a list of boats similar to the current boat.
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.currentBoat - The currently selected boat
+ * @returns {JSX.Element} - Rendered component
+ */
 const SimilarBoats = ({ currentBoat }) => {
   const [selectedBoat, setSelectedBoat] = useState(null);
-  
-  console.log('Current boat:', currentBoat);
+  const [sortBy, setSortBy] = useState('match'); // Default sort by match percentage
 
-  const similarBoats = sampleBoats
-    .map(boat => {
-      const matchScore = calculateMatchScore(currentBoat, boat);
-      console.log(`Match for ${boat.name}:`, matchScore);
-      return {
-        ...boat,
-        matchScore
-      };
-    })
-    .sort((a, b) => b.matchScore - a.matchScore)
-    .slice(0, 3);
+  // Calculate similar boats using memoization for performance
+  const similarBoats = useMemo(() => {
+    if (!currentBoat) {
+      return [];
+    }
 
-  console.log('Similar boats:', similarBoats);
+    // Get all boats except the current one
+    return sampleBoats
+      .filter(boat => boat.id !== currentBoat.id) // Filter out the current boat
+      .map(boat => {
+        try {
+          // Use pre-defined matchScore if available, otherwise calculate it
+          const matchScore = boat.matchScore !== undefined ? 
+                             boat.matchScore : 
+                             calculateMatchScore(currentBoat, boat);
+          return {
+            ...boat,
+            matchScore
+          };
+        } catch (error) {
+          console.error(`Error calculating match score for ${boat.name}:`, error);
+          return {
+            ...boat,
+            matchScore: 0
+          };
+        }
+      })
+      .sort((a, b) => {
+        if (sortBy === 'match') {
+          return b.matchScore - a.matchScore; // Sort by match score (highest first)
+        } else if (sortBy === 'price') {
+          // Handle potential missing prices
+          const priceA = a.price || 0;
+          const priceB = b.price || 0;
+          return priceA - priceB; // Sort by price (lowest first)
+        } else if (sortBy === 'length') {
+          // Handle potential missing lengths
+          const lengthA = a.length || 0;
+          const lengthB = b.length || 0;
+          return lengthA - lengthB; // Sort by length (shortest first)
+        }
+        return 0;
+      })
+      .slice(0, 3); // Get top 3 matches
+  }, [currentBoat, sortBy]);
 
-  const handleImageClick = (boat, e) => {
+  // Format boat length with proper units
+  const formatBoatLength = (boat) => {
+    if (!boat.length) return 'N/A';
+    return `${boat.length} ft`;
+  };
+
+  // Handle boat selection for detailed comparison
+  const handleImageClick = useCallback((boat, e) => {
     e.stopPropagation(); // Prevent event from bubbling up
     setSelectedBoat(boat);
-  };
+  }, []);
+
+  // If there's no current boat, display a placeholder
+  if (!currentBoat) {
+    return (
+      <div className={styles.placeholder}>
+        <div className={styles.placeholderContent}>
+          <h3>Select a boat to see similar options</h3>
+          <p>Upload an image or select from our catalog to see matches</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.container}>
       <div className={styles.header}>
         <h2 className={styles.title}>Similar Boats Found</h2>
-        <div className={styles.sortBy}>
+        <div className={styles.sortOptions}>
           <span>Sort by:</span>
-          <select className={styles.sortSelect}>
+          <select
+            value={sortBy}
+            onChange={(e) => setSortBy(e.target.value)}
+            className={styles.sortSelector}
+          >
             <option value="match">Match %</option>
+            <option value="price">Price</option>
+            <option value="length">Length</option>
           </select>
         </div>
       </div>
 
       <div className={styles.boatsGrid}>
-        {similarBoats.map((boat, index) => (
-          <div 
-            key={index} 
-            className={styles.boatCard}
-          >
-            <div className={styles.imageContainer}>
-              <div 
-                className={styles.matchBadge}
-                data-match={boat.matchScore >= 90 ? "high" : boat.matchScore >= 80 ? "medium" : "low"}
-              >
-                {isNaN(boat.matchScore) ? 'N/A' : `${boat.matchScore}% Match`}
-              </div>
-              <img 
-                src={boat.imageUrl} 
-                alt={boat.name} 
-                className={styles.boatImage}
-                onClick={(e) => handleImageClick(boat, e)}
-                style={{ cursor: 'pointer' }}
-                onError={(e) => console.error(`Failed to load image for ${boat.name}:`, e.target.src)}
-              />
-            </div>
-            
-            <div className={styles.boatInfo}>
-              <h3 className={styles.boatName}>{boat.name}</h3>
-              <p className={styles.location}>{boat.location}</p>
-              
-              <div className={styles.specs}>
-                <div className={styles.spec}>
-                  <span className={styles.label}>Size</span>
-                  <span className={styles.value}>{formatBoatLength(boat)}</span>
+        {similarBoats.length > 0 ? (
+          similarBoats.map((boat, index) => (
+            <div
+              key={index}
+              className={styles.boatCard}
+            >
+              <div className={styles.imageContainer}>
+                <div
+                  className={styles.matchBadge}
+                  data-match={boat.matchScore === 100 ? "perfect" : boat.matchScore >= 90 ? "high" : boat.matchScore >= 75 ? "medium" : "low"}
+                >
+                  {isNaN(boat.matchScore) ? 'N/A' : `${Math.round(boat.matchScore)}% Match`}
                 </div>
-                <div className={styles.spec}>
-                  <span className={styles.label}>Type</span>
-                  <span className={styles.value}>{boat.type}</span>
-                </div>
-              </div>
-              
-              <div className={styles.specs}>
-                <div className={styles.spec}>
-                  <span className={styles.label}>Engine</span>
-                  <span className={styles.value}>{boat.engine}</span>
-                </div>
-                <div className={styles.spec}>
-                  <span className={styles.label}>Hull</span>
-                  <span className={styles.value}>{boat.hullMaterial}</span>
-                </div>
+                <img
+                  src={boat.imageUrl}
+                  alt={boat.name}
+                  className={styles.boatImage}
+                  onClick={(e) => handleImageClick(boat, e)}
+                  style={{ cursor: 'pointer' }}
+                  onError={(e) => {
+                    console.error(`Failed to load image for ${boat.name}:`, e.target.src);
+                    e.target.src = '/placeholder-boat.jpg'; // Fallback image
+                  }}
+                />
               </div>
 
-              <BoatFeatures features={boat.features} />
+              <div className={styles.boatInfo}>
+                <h3 className={styles.boatName}>{boat.name}</h3>
+                <p className={styles.location}>{boat.location || 'Location not specified'}</p>
 
-              <div className={styles.price}>
-                ${new Intl.NumberFormat('en-US').format(boat.price)}
+                <div className={styles.specs}>
+                  <div className={styles.spec}>
+                    <span className={styles.label}>Size</span>
+                    <span className={styles.value}>{formatBoatLength(boat)}</span>
+                  </div>
+                  <div className={styles.spec}>
+                    <span className={styles.label}>Type</span>
+                    <span className={styles.value}>{boat.type || 'N/A'}</span>
+                  </div>
+                </div>
+
+                <div className={styles.specs}>
+                  <div className={styles.spec}>
+                    <span className={styles.label}>Engine</span>
+                    <span className={styles.value}>{boat.engine || 'N/A'}</span>
+                  </div>
+                  <div className={styles.spec}>
+                    <span className={styles.label}>Hull</span>
+                    <span className={styles.value}>{boat.hullMaterial || 'N/A'}</span>
+                  </div>
+                </div>
+
+                <BoatFeatures features={boat.features} />
+
+                <div className={styles.price}>
+                  {boat.price
+                    ? `$${new Intl.NumberFormat('en-US').format(boat.price)}`
+                    : 'Price not specified'}
+                </div>
               </div>
             </div>
+          ))
+        ) : (
+          <div className={styles.noResults}>
+            <p>No similar boats found. Try adjusting your criteria.</p>
           </div>
-        ))}
+        )}
       </div>
 
       {selectedBoat && (

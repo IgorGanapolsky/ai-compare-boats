@@ -1,81 +1,144 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import styles from './styles.module.css';
 
+/**
+ * Component for detailed comparison between two boats
+ * @param {Object} props - Component props
+ * @param {Object} props.currentBoat - The original boat being compared
+ * @param {Object} props.comparisonBoat - The boat to compare against
+ * @param {Function} props.onClose - Function to handle closing the comparison
+ * @returns {JSX.Element} - Rendered component
+ */
 const DetailedComparison = ({ currentBoat, comparisonBoat, onClose }) => {
-  const getFeatureAnalysis = () => {
-    const normalizeFeature = (feature) => feature.toLowerCase()
-      .replace(/[^a-z0-9\s]/g, '')
-      .replace(/for|with|and|the|a|an/g, '')
-      .trim();
+  /**
+   * Analyzes the features of both boats to find commonalities and differences
+   * @returns {Object} - Analysis results with match rate and feature lists
+   */
+  const getFeatureAnalysis = useMemo(() => {
+    if (!currentBoat || !comparisonBoat) {
+      return {
+        matchRate: 0,
+        commonFeatures: [],
+        uniqueToUploaded: [],
+        uniqueToMatch: []
+      };
+    }
+    
+    // Normalize feature text for better matching
+    const normalizeFeature = (feature) => {
+      if (typeof feature !== 'string') return '';
+      
+      return feature.toLowerCase()
+        .replace(/[^a-z0-9\s]/g, '')
+        .replace(/\b(for|with|and|the|a|an|to|in|on|of)\b/g, '')
+        .trim();
+    };
 
-    const extractFeaturesFromAnalysis = (boat) => {
+    // Extract all features from a boat object
+    const extractFeaturesFromBoat = (boat) => {
       const features = new Set();
       
+      if (!boat) return features;
+      
+      // Collect features from all possible feature sources
       if (Array.isArray(boat.features)) {
-        boat.features.forEach(f => features.add(normalizeFeature(f)));
+        boat.features.forEach(f => {
+          const normalized = normalizeFeature(f);
+          if (normalized) features.add(normalized);
+        });
       }
 
       if (Array.isArray(boat.keyFeatures)) {
-        boat.keyFeatures.forEach(f => features.add(normalizeFeature(f)));
+        boat.keyFeatures.forEach(f => {
+          const normalized = normalizeFeature(f);
+          if (normalized) features.add(normalized);
+        });
       }
 
       if (Array.isArray(boat.style)) {
-        boat.style.forEach(s => features.add(normalizeFeature(s)));
+        boat.style.forEach(s => {
+          const normalized = normalizeFeature(s);
+          if (normalized) features.add(normalized);
+        });
       }
 
       return features;
     };
 
-    const currentFeatures = extractFeaturesFromAnalysis(currentBoat);
-    const comparisonFeatures = extractFeaturesFromAnalysis(comparisonBoat);
+    // Check if two features are similar
+    const areSimilarFeatures = (feature1, feature2) => {
+      // Exact match
+      if (feature1 === feature2) return true;
+      
+      // One contains the other
+      if (feature1.includes(feature2) || feature2.includes(feature1)) return true;
 
-    const findSimilarFeatures = (feature, targetSet) => {
-      return [...targetSet].some(target => {
-        if (feature === target) return true;
-        if (feature.includes(target) || target.includes(feature)) return true;
+      // Split into words and check for common words
+      const words1 = feature1.split(/\s+/).filter(Boolean);
+      const words2 = feature2.split(/\s+/).filter(Boolean);
+      
+      // Empty features shouldn't match
+      if (words1.length === 0 || words2.length === 0) return false;
+      
+      // Calculate word overlap
+      const commonWords = words1.filter(word => 
+        words2.some(w2 => w2.includes(word) || word.includes(w2))
+      );
 
-        const featureWords = feature.split(' ');
-        const targetWords = target.split(' ');
-        
-        const commonWords = featureWords.filter(word => 
-          targetWords.some(targetWord => 
-            targetWord.includes(word) || word.includes(targetWord)
-          )
-        );
-
-        const similarityScore = commonWords.length / Math.max(featureWords.length, targetWords.length);
-        return similarityScore >= 0.5;
-      });
+      // Calculate similarity score
+      const similarityScore = commonWords.length / Math.max(words1.length, words2.length);
+      
+      // Consider features similar if they share enough words
+      return similarityScore >= 0.5;
     };
 
-    const commonFeatures = [...currentFeatures].filter(f => 
-      findSimilarFeatures(f, comparisonFeatures)
+    // Get all features from both boats
+    const currentFeatures = extractFeaturesFromBoat(currentBoat);
+    const comparisonFeatures = extractFeaturesFromBoat(comparisonBoat);
+
+    // Find common and unique features
+    const commonFeatures = [...currentFeatures].filter(feature => 
+      [...comparisonFeatures].some(compFeature => areSimilarFeatures(feature, compFeature))
     );
-    const uniqueToUploaded = [...currentFeatures].filter(f => 
-      !findSimilarFeatures(f, comparisonFeatures)
+    
+    const uniqueToUploaded = [...currentFeatures].filter(feature => 
+      ![...comparisonFeatures].some(compFeature => areSimilarFeatures(feature, compFeature))
     );
-    const uniqueToMatch = [...comparisonFeatures].filter(f => 
-      !findSimilarFeatures(f, currentFeatures)
+    
+    const uniqueToMatch = [...comparisonFeatures].filter(feature => 
+      ![...currentFeatures].some(currFeature => areSimilarFeatures(feature, currFeature))
     );
 
-    const totalUniqueFeatures = uniqueToUploaded.length + uniqueToMatch.length;
-    const matchRate = Math.round(
-      (commonFeatures.length / (commonFeatures.length + totalUniqueFeatures)) * 100
-    );
+    // Calculate match percentage
+    const totalFeatures = commonFeatures.length + uniqueToUploaded.length + uniqueToMatch.length;
+    const matchRate = totalFeatures > 0 
+      ? Math.round((commonFeatures.length / totalFeatures) * 100) 
+      : 0;
 
-    const findOriginalText = (normalizedFeature, featureList) => 
-      featureList.find(f => normalizeFeature(f) === normalizedFeature) || normalizedFeature;
+    // Find original feature text from normalized versions
+    const findOriginalText = (normalizedFeature, boat) => {
+      const allFeatures = [
+        ...(Array.isArray(boat.features) ? boat.features : []),
+        ...(Array.isArray(boat.keyFeatures) ? boat.keyFeatures : []),
+        ...(Array.isArray(boat.style) ? boat.style : [])
+      ];
+      
+      return allFeatures.find(f => normalizeFeature(f) === normalizedFeature) || normalizedFeature;
+    };
 
     return {
       matchRate,
-      commonFeatures: commonFeatures.map(f => findOriginalText(f, currentBoat.features || [])),
-      uniqueToUploaded: uniqueToUploaded.map(f => findOriginalText(f, currentBoat.features || [])),
-      uniqueToMatch: uniqueToMatch.map(f => findOriginalText(f, comparisonBoat.features || []))
+      commonFeatures: commonFeatures.map(f => findOriginalText(f, currentBoat)),
+      uniqueToUploaded: uniqueToUploaded.map(f => findOriginalText(f, currentBoat)),
+      uniqueToMatch: uniqueToMatch.map(f => findOriginalText(f, comparisonBoat))
     };
-  };
+  }, [currentBoat, comparisonBoat]);
 
-  const featureAnalysis = getFeatureAnalysis();
-
+  /**
+   * Formats boat size for display
+   * @param {string|number} size - Size value to format
+   * @returns {string} - Formatted size string
+   */
   const formatBoatSize = (size) => {
     // Handle null/undefined
     if (!size) return 'N/A';
@@ -85,154 +148,185 @@ const DetailedComparison = ({ currentBoat, comparisonBoat, onClose }) => {
     
     // Extract first number from string
     const match = sizeStr.match(/(\d+(?:\.\d+)?)/);
-    if (!match) return 'N/A';
+    if (!match) return sizeStr;
     
-    // Round to nearest whole number
+    // Round to nearest whole number for display
     const value = Math.round(parseFloat(match[1]));
     return `${value} ft`;
   };
 
-  const renderSpecification = (label, value1, value2) => {
-    let match = false;
-    if (label === 'Length') {
-      const size1 = formatBoatSize(value1);
-      const size2 = formatBoatSize(value2);
-      value1 = size1;
-      value2 = size2;
-      // Compare numeric values only
-      const num1 = parseFloat(size1);
-      const num2 = parseFloat(size2);
-      match = !isNaN(num1) && !isNaN(num2) && Math.abs(num1 - num2) <= 2;
-    } else if (label === 'Boat Category') {
-      match = value1?.toLowerCase()?.trim() === value2?.toLowerCase()?.trim();
-    } else {
-      match = value1 === value2;
+  /**
+   * Get boat size from various possible fields
+   * @param {Object} boat - Boat object
+   * @returns {string} - Size value
+   */
+  const getBoatSize = (boat) => {
+    if (!boat) return 'N/A';
+    
+    if (boat.length) {
+      return formatBoatSize(boat.length);
     }
-
-    return (
-      <div className={styles.specification}>
-        <div className={styles.specLabel}>{label}</div>
-        <div className={styles.specValue}>
-          <div>{value1 || 'N/A'}</div>
-          {match ? (
-            <div className={styles.matchIcon}>✓</div>
-          ) : (
-            <div className={styles.noMatchIcon}>×</div>
-          )}
-        </div>
-        <div className={styles.specValue}>
-          <div>{value2 || 'N/A'}</div>
-          {match ? (
-            <div className={styles.matchIcon}>✓</div>
-          ) : (
-            <div className={styles.noMatchIcon}>×</div>
-          )}
-        </div>
-      </div>
-    );
+    
+    if (boat.dimensions?.lengthOverall) {
+      return boat.dimensions.lengthOverall;
+    }
+    
+    if (boat.size) {
+      return formatBoatSize(boat.size);
+    }
+    
+    return 'N/A';
   };
 
-  const renderFeatureTag = (feature, type) => (
-    <span key={feature} className={`${styles.featureTag} ${styles[type]}`}>
-      {feature}
-    </span>
-  );
+  // If either boat is missing, don't render the comparison
+  if (!currentBoat || !comparisonBoat) {
+    return null;
+  }
+  
+  // Get feature analysis
+  const featureAnalysis = getFeatureAnalysis;
 
   return (
-    <div className={styles.overlay}>
-      <div className={styles.modal}>
-        <div className={styles.header}>
+    <div className={styles.popupOverlay} onClick={onClose}>
+      <div className={styles.popupContent} onClick={e => e.stopPropagation()}>
+        <div className={styles.popupHeader}>
           <h2>Detailed Comparison</h2>
-          <button onClick={onClose} className={styles.closeButton}>×</button>
+          <button className={styles.closeButton} onClick={onClose}>×</button>
         </div>
-
-        <div className={styles.content}>
-          <div className={styles.boatImages}>
-            <div className={styles.boatSection}>
-              <h3>Your Reference Boat</h3>
-              {currentBoat.imageUrl && (
-                <img src={currentBoat.imageUrl} alt="Reference boat" />
-              )}
+        
+        <div className={styles.comparisonContainer}>
+          <div className={styles.boatColumn}>
+            <div className={styles.boatHeader}>
+              <h3>Your Boat</h3>
+              <img 
+                src={currentBoat.imageUrl || '/placeholder-boat.jpg'} 
+                alt={currentBoat.name || 'Your boat'} 
+                className={styles.boatImage}
+                onError={(e) => e.target.src = '/placeholder-boat.jpg'}
+              />
+              <h4>{currentBoat.name || 'Your boat'}</h4>
             </div>
-            <div className={styles.boatSection}>
-              <h3>{comparisonBoat.name}</h3>
-              <img src={comparisonBoat.imageUrl} alt={comparisonBoat.name} />
+            
+            <div className={styles.boatDetails}>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Size:</span>
+                <span className={styles.detailValue}>{getBoatSize(currentBoat)}</span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Type:</span>
+                <span className={styles.detailValue}>{currentBoat.type || 'N/A'}</span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Engine:</span>
+                <span className={styles.detailValue}>{currentBoat.engine || 'N/A'}</span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Hull:</span>
+                <span className={styles.detailValue}>{currentBoat.hullMaterial || 'N/A'}</span>
+              </div>
             </div>
           </div>
-
-          <section className={styles.specifications}>
-            <h3>Key Specifications Comparison</h3>
-            <div className={styles.specGrid}>
-              {renderSpecification(
-                'Length',
-                currentBoat.length || currentBoat.size,
-                comparisonBoat.length
-              )}
-              {renderSpecification(
-                'Hull Material',
-                currentBoat.hullMaterial,
-                comparisonBoat.hullMaterial
-              )}
-              {renderSpecification(
-                'Engine',
-                currentBoat.engine,
-                comparisonBoat.engine
-              )}
-              {renderSpecification(
-                'Boat Category',
-                currentBoat.type,
-                comparisonBoat.type
-              )}
+          
+          <div className={styles.boatColumn}>
+            <div className={styles.boatHeader}>
+              <h3>Match</h3>
+              <div className={styles.matchRateDisplay}>
+                <div className={styles.matchCircle} data-match={featureAnalysis.matchRate >= 75 ? "high" : featureAnalysis.matchRate >= 50 ? "medium" : "low"}>
+                  <span>{featureAnalysis.matchRate}%</span>
+                  <span className={styles.matchLabel}>Match</span>
+                </div>
+              </div>
+              <img 
+                src={comparisonBoat.imageUrl || '/placeholder-boat.jpg'} 
+                alt={comparisonBoat.name} 
+                className={styles.boatImage} 
+                onError={(e) => e.target.src = '/placeholder-boat.jpg'}
+              />
+              <h4>{comparisonBoat.name}</h4>
             </div>
-          </section>
-
-          <section className={styles.featureAnalysis}>
-            <h3>Feature Analysis</h3>
-            <div className={styles.metrics}>
-              <div className={styles.metric}>
-                <span className={styles.metricValue}>{featureAnalysis.matchRate}%</span>
-                <span className={styles.metricLabel}>Feature Match Rate</span>
+            
+            <div className={styles.boatDetails}>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Size:</span>
+                <span className={styles.detailValue}>{getBoatSize(comparisonBoat)}</span>
               </div>
-              <div className={styles.metric}>
-                <span className={styles.metricValue}>{featureAnalysis.commonFeatures.length}</span>
-                <span className={styles.metricLabel}>Common Features</span>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Type:</span>
+                <span className={styles.detailValue}>{comparisonBoat.type || 'N/A'}</span>
               </div>
-              <div className={styles.metric}>
-                <span className={styles.metricValue}>
-                  {featureAnalysis.uniqueToUploaded.length + featureAnalysis.uniqueToMatch.length}
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Engine:</span>
+                <span className={styles.detailValue}>{comparisonBoat.engine || 'N/A'}</span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Hull:</span>
+                <span className={styles.detailValue}>{comparisonBoat.hullMaterial || 'N/A'}</span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Price:</span>
+                <span className={styles.detailValue}>
+                  {comparisonBoat.price 
+                    ? `$${new Intl.NumberFormat('en-US').format(comparisonBoat.price)}` 
+                    : 'N/A'}
                 </span>
-                <span className={styles.metricLabel}>Unique Features</span>
+              </div>
+              <div className={styles.detailItem}>
+                <span className={styles.detailLabel}>Location:</span>
+                <span className={styles.detailValue}>{comparisonBoat.location || 'N/A'}</span>
               </div>
             </div>
-
-            <div className={styles.featureTags}>
-              <h4>Common Features:</h4>
-              <div className={styles.tagGroup}>
-                {featureAnalysis.commonFeatures.map(feature => 
-                  renderFeatureTag(feature, 'common')
+          </div>
+        </div>
+        
+        <div className={styles.featureComparison}>
+          <h3>Feature Comparison</h3>
+          
+          <div className={styles.featureCategories}>
+            <div className={styles.featureCategory}>
+              <h4>Common Features</h4>
+              <ul className={styles.featureList}>
+                {featureAnalysis.commonFeatures.length > 0 ? (
+                  featureAnalysis.commonFeatures.map((feature, index) => (
+                    <li key={`common-${index}`} className={styles.commonFeature}>
+                      {feature}
+                    </li>
+                  ))
+                ) : (
+                  <li className={styles.noFeatures}>No common features found</li>
                 )}
-              </div>
+              </ul>
             </div>
-
-            <div className={styles.uniqueFeatures}>
-              <div className={styles.uniqueSection}>
-                <h4>Unique to Uploaded Boat</h4>
-                <div className={styles.tagGroup}>
-                  {featureAnalysis.uniqueToUploaded.map(feature => 
-                    renderFeatureTag(feature, 'uniqueUploaded')
-                  )}
-                </div>
-              </div>
-              <div className={styles.uniqueSection}>
-                <h4>Unique to Match Boat</h4>
-                <div className={styles.tagGroup}>
-                  {featureAnalysis.uniqueToMatch.map(feature => 
-                    renderFeatureTag(feature, 'uniqueMatch')
-                  )}
-                </div>
-              </div>
+            
+            <div className={styles.featureCategory}>
+              <h4>Only in Your Boat</h4>
+              <ul className={styles.featureList}>
+                {featureAnalysis.uniqueToUploaded.length > 0 ? (
+                  featureAnalysis.uniqueToUploaded.map((feature, index) => (
+                    <li key={`unique1-${index}`} className={styles.uniqueFeature1}>
+                      {feature}
+                    </li>
+                  ))
+                ) : (
+                  <li className={styles.noFeatures}>No unique features</li>
+                )}
+              </ul>
             </div>
-          </section>
+            
+            <div className={styles.featureCategory}>
+              <h4>Only in {comparisonBoat.name}</h4>
+              <ul className={styles.featureList}>
+                {featureAnalysis.uniqueToMatch.length > 0 ? (
+                  featureAnalysis.uniqueToMatch.map((feature, index) => (
+                    <li key={`unique2-${index}`} className={styles.uniqueFeature2}>
+                      {feature}
+                    </li>
+                  ))
+                ) : (
+                  <li className={styles.noFeatures}>No unique features</li>
+                )}
+              </ul>
+            </div>
+          </div>
         </div>
       </div>
     </div>

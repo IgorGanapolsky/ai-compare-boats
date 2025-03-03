@@ -60,6 +60,7 @@ const sampleBoats = [
         totalPower: '900hp',
         engineHours: 500, // Example value
         hullMaterial: 'Fiberglass',
+        matchScore: 100, // Force 100% match for demo
         dimensions: {
             lengthOverall: '35ft 11in',
             beam: '11ft 8in',
