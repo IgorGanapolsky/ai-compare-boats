@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { calculateMatchScore } from '../../utils/boatMatching';
 import sampleBoats from '../../data/sampleBoats';
 import DetailedComparison from '../DetailedComparison';
@@ -15,66 +15,116 @@ import BoatFeatures from '../BoatFeatures';
 const SimilarBoats = ({ currentBoat }) => {
   const [selectedBoat, setSelectedBoat] = useState(null);
   const [sortBy, setSortBy] = useState('match'); // Default sort by match percentage
+  const [matchedBoats, setMatchedBoats] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  // Calculate similar boats using memoization for performance
-  const similarBoats = useMemo(() => {
-    if (!currentBoat) {
-      return [];
-    }
+  // Get potential similar boats excluding the current boat
+  const filteredBoats = useMemo(() => {
+    if (!currentBoat) return [];
+    return sampleBoats.filter(boat => boat.id !== currentBoat.id);
+  }, [currentBoat]);
 
-    // Get all boats except the current one
-    return sampleBoats
-      .filter(boat => boat.id !== currentBoat.id) // Filter out the current boat
-      .map(boat => {
-        try {
-          // Use pre-defined matchScore if available, otherwise calculate it
-          const matchScore = boat.matchScore !== undefined ? 
-                             boat.matchScore : 
-                             calculateMatchScore(currentBoat, boat);
-          return {
-            ...boat,
-            matchScore
-          };
-        } catch (error) {
-          console.error(`Error calculating match score for ${boat.name}:`, error);
-          return {
-            ...boat,
-            matchScore: 0
-          };
+  // Calculate match scores asynchronously when the current boat changes
+  useEffect(() => {
+    const calculateMatches = async () => {
+      if (!currentBoat || filteredBoats.length === 0) {
+        setMatchedBoats([]);
+        return;
+      }
+
+      setLoading(true);
+      
+      try {
+        // Process boats in batches to avoid UI freezing
+        const boatsWithScores = [];
+        
+        for (const boat of filteredBoats) {
+          try {
+            // Use pre-defined matchScore if available, otherwise calculate it
+            let matchScore;
+            if (boat.matchScore !== undefined) {
+              matchScore = boat.matchScore;
+            } else {
+              matchScore = await calculateMatchScore(currentBoat, boat);
+            }
+            
+            boatsWithScores.push({
+              ...boat,
+              matchScore
+            });
+          } catch (error) {
+            console.error(`Error calculating match score for ${boat.name}:`, error);
+            boatsWithScores.push({
+              ...boat,
+              matchScore: 0
+            });
+          }
         }
-      })
-      .sort((a, b) => {
-        if (sortBy === 'match') {
-          return b.matchScore - a.matchScore; // Sort by match score (highest first)
-        } else if (sortBy === 'price') {
-          // Handle potential missing prices
-          const priceA = a.price || 0;
-          const priceB = b.price || 0;
-          return priceA - priceB; // Sort by price (lowest first)
-        } else if (sortBy === 'length') {
-          // Handle potential missing lengths
-          const lengthA = a.length || 0;
-          const lengthB = b.length || 0;
-          return lengthA - lengthB; // Sort by length (shortest first)
-        }
-        return 0;
-      })
-      .slice(0, 3); // Get top 3 matches
-  }, [currentBoat, sortBy]);
+        
+        // Sort the boats based on current sort criteria
+        const sortedBoats = sortBoats(boatsWithScores, sortBy);
+        setMatchedBoats(sortedBoats);
+      } catch (error) {
+        console.error('Error processing similar boats:', error);
+        setMatchedBoats([]);
+      } finally {
+        setLoading(false);
+      }
+    };
 
-  // Format boat length with proper units
-  const formatBoatLength = (boat) => {
-    if (!boat.length) return 'N/A';
-    return `${boat.length} ft`;
+    calculateMatches();
+  }, [currentBoat, filteredBoats, sortBy]);
+
+  // Function to sort boats based on criteria
+  const sortBoats = (boats, sortCriteria) => {
+    return [...boats].sort((a, b) => {
+      if (sortCriteria === 'match') {
+        return b.matchScore - a.matchScore; // Sort by match score (highest first)
+      } else if (sortCriteria === 'price') {
+        // Handle potential missing prices
+        const priceA = a.price || 0;
+        const priceB = b.price || 0;
+        return priceA - priceB; // Sort by price (lowest first)
+      } else if (sortCriteria === 'length') {
+        // Handle potential missing lengths
+        const lengthA = a.length || 0;
+        const lengthB = b.length || 0;
+        return lengthA - lengthB; // Sort by length (shortest first)
+      }
+      return 0;
+    });
   };
 
-  // Handle boat selection for detailed comparison
-  const handleImageClick = useCallback((boat, e) => {
-    e.stopPropagation(); // Prevent event from bubbling up
-    setSelectedBoat(boat);
+  // Handle sort change
+  const handleSortChange = useCallback((e) => {
+    const newSortBy = e.target.value;
+    setSortBy(newSortBy);
   }, []);
 
-  // If there's no current boat, display a placeholder
+  // Handle boat selection for detailed comparison
+  const handleBoatSelect = useCallback((boat) => {
+    setSelectedBoat(boat === selectedBoat ? null : boat);
+  }, [selectedBoat]);
+
+  // Format match percentage for display
+  const formatMatchPercentage = useCallback((score) => {
+    return `${Math.round(score)}%`;
+  }, []);
+
+  // Get CSS class based on match percentage
+  const getMatchScoreClass = useCallback((score) => {
+    if (score >= 80) return styles.highMatch;
+    if (score >= 60) return styles.mediumMatch;
+    return styles.lowMatch;
+  }, []);
+
+  // Format boat length with proper units
+  const formatBoatLength = useCallback((boat) => {
+    if (!boat.length) return 'N/A';
+    return `${boat.length} ft`;
+  }, []);
+
+  // If no current boat is selected, show a message
   if (!currentBoat) {
     return (
       <div className={styles.placeholder}>
@@ -94,7 +144,7 @@ const SimilarBoats = ({ currentBoat }) => {
           <span>Sort by:</span>
           <select
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value)}
+            onChange={handleSortChange}
             className={styles.sortSelector}
           >
             <option value="match">Match %</option>
@@ -104,9 +154,17 @@ const SimilarBoats = ({ currentBoat }) => {
         </div>
       </div>
 
-      <div className={styles.boatsGrid}>
-        {similarBoats.length > 0 ? (
-          similarBoats.map((boat, index) => (
+      {loading ? (
+        <div className={styles.loadingContainer}>
+          <p>Calculating matches...</p>
+        </div>
+      ) : matchedBoats.length === 0 ? (
+        <div className={styles.noResults}>
+          <p>No similar boats found. Try adjusting your criteria.</p>
+        </div>
+      ) : (
+        <div className={styles.boatsGrid}>
+          {matchedBoats.map((boat, index) => (
             <div
               key={index}
               className={styles.boatCard}
@@ -122,7 +180,7 @@ const SimilarBoats = ({ currentBoat }) => {
                   src={boat.imageUrl}
                   alt={boat.name}
                   className={styles.boatImage}
-                  onClick={(e) => handleImageClick(boat, e)}
+                  onClick={(e) => handleBoatSelect(boat, e)}
                   style={{ cursor: 'pointer' }}
                   onError={(e) => {
                     console.error(`Failed to load image for ${boat.name}:`, e.target.src);
@@ -166,13 +224,9 @@ const SimilarBoats = ({ currentBoat }) => {
                 </div>
               </div>
             </div>
-          ))
-        ) : (
-          <div className={styles.noResults}>
-            <p>No similar boats found. Try adjusting your criteria.</p>
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
       {selectedBoat && (
         <DetailedComparison

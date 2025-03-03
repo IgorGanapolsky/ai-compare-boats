@@ -56,41 +56,60 @@ const normalizeBoatData = (boat) => {
 };
 
 /**
+ * Check if two boat types are related
+ * @param {string} type1 - First boat type
+ * @param {string} type2 - Second boat type
+ * @returns {boolean} - Whether the types are related
+ */
+const areBoatTypesRelated = (type1, type2) => {
+  // Handle null/undefined values
+  if (!type1 || !type2) return false;
+  
+  // Normalize - ensure we're working with strings
+  const t1 = String(type1).toLowerCase().trim();
+  const t2 = String(type2).toLowerCase().trim();
+  
+  // Direct match
+  if (t1 === t2) return true;
+  
+  // Check for containment
+  if (t1.includes(t2) || t2.includes(t1)) return true;
+  
+  // Word overlap
+  const words1 = t1.split(' ');
+  const words2 = t2.split(' ');
+  const commonWords = words1.filter(word => words2.includes(word) && word.length > 3);
+  
+  return commonWords.length > 0;
+};
+
+/**
  * Calculate type match score between two boat types
  * @param {string} type1 - First boat type
  * @param {string} type2 - Second boat type
  * @returns {number} - Match score between 0-1
  */
 const getTypeMatchScore = (type1, type2) => {
+  // Handle null/undefined values
   if (!type1 || !type2) return 0;
 
   // Normalize types by converting to lowercase and removing extra spaces
-  const normalizedType1 = type1.toLowerCase().trim();
-  const normalizedType2 = type2.toLowerCase().trim();
+  // Ensure we're working with strings
+  const normalizedType1 = String(type1).toLowerCase().trim();
+  const normalizedType2 = String(type2).toLowerCase().trim();
 
   // Direct match
   if (normalizedType1 === normalizedType2) return 1;
-
-  // Handle special cases with a comprehensive type mapping
-  const typeMap = {
-    'cabin boat': ['center console cabin boat', 'express cruiser', 'sport fishing', 'cruiser'],
-    'center console': ['center console cabin boat', 'dual console', 'walkaround'],
-    'sport fishing': ['sport fishing express', 'center console', 'express cruiser', 'offshore'],
-    'express cruiser': ['cabin boat', 'sport fishing express', 'motor yacht', 'cruiser'],
-    'boston whaler': ['conquest', 'outrage', 'center console', 'dual console'],
-    'fishing boat': ['sport fishing', 'center console', 'walkaround', 'offshore']
-  };
-
-  // Check if types are related by the mapping system
-  if (typeMap[normalizedType1]?.includes(normalizedType2) ||
-    typeMap[normalizedType2]?.includes(normalizedType1)) {
-    return 0.9;
-  }
 
   // Check if one type contains the other
   if (normalizedType1.includes(normalizedType2) ||
     normalizedType2.includes(normalizedType1)) {
     return 0.8;
+  }
+
+  // Use our areBoatTypesRelated function to check for related boat types
+  if (areBoatTypesRelated(normalizedType1, normalizedType2)) {
+    return 0.7;
   }
 
   // Calculate word overlap
@@ -122,12 +141,12 @@ const getNameMatchScore = (boat1, boat2) => {
   }
 
   // Check manufacturer match (highest weight)
-  const mfgMatch = boat1.manufacturer.toLowerCase() === boat2.manufacturer.toLowerCase() ? 0.7 : 0;
+  const mfgMatch = String(boat1.manufacturer).toLowerCase() === String(boat2.manufacturer).toLowerCase() ? 0.7 : 0;
 
   // Check model number similarities 
   const modelSimilarity = () => {
-    const model1 = boat1.model.toLowerCase();
-    const model2 = boat2.model.toLowerCase();
+    const model1 = String(boat1.model).toLowerCase();
+    const model2 = String(boat2.model).toLowerCase();
 
     // Direct model match
     if (model1 === model2) return 0.3;
@@ -152,6 +171,118 @@ const getNameMatchScore = (boat1, boat2) => {
 };
 
 /**
+ * Calculate visual similarity between two boat images using OpenAI Vision API
+ * 
+ * @param {Object} boat1 - First boat with image
+ * @param {Object} boat2 - Second boat with image
+ * @returns {Promise<number>} - Similarity score (0-1)
+ */
+const calculateVisualMatchScore = async (boat1, boat2) => {
+  // For identical boats or boats with the same image URL, return perfect match
+  if (boat1.id === boat2.id || boat1.imageUrl === boat2.imageUrl) {
+    return 1.0;
+  }
+  
+  // Check if we have URLs for both boats
+  if (!boat1.imageUrl || !boat2.imageUrl) {
+    console.warn('Missing image URLs for visual comparison', {
+      boat1: boat1.name,
+      boat2: boat2.name
+    });
+    // Fall back to type-based similarity
+    if (boat1.type === boat2.type) {
+      return 0.7;
+    } else if (areBoatTypesRelated(boat1.type, boat2.type)) {
+      return 0.5; 
+    } else {
+      return 0.3;
+    }
+  }
+
+  try {
+    // Import OpenAI from the service
+    const OpenAI = (await import('openai')).default;
+    
+    const openai = new OpenAI({
+      apiKey: process.env.REACT_APP_OPENAI_API_KEY,
+      dangerouslyAllowBrowser: true
+    });
+
+    // Check if API key is available
+    if (!process.env.REACT_APP_OPENAI_API_KEY) {
+      console.warn('OpenAI API key not available, using fallback visual matching');
+      if (boat1.type === boat2.type) {
+        return 0.7;
+      } else if (areBoatTypesRelated(boat1.type, boat2.type)) {
+        return 0.5;
+      } else {
+        return 0.3;
+      }
+    }
+
+    console.log('Requesting OpenAI for visual similarity analysis between:', {
+      boat1: boat1.name,
+      boat2: boat2.name
+    });
+
+    // Call the OpenAI API to analyze visual similarity
+    const response = await openai.chat.completions.create({
+      model: "gpt-4o",
+      messages: [
+        {
+          role: "system",
+          content: "Compare the visual similarity of these two boat images. Focus on boat type, design, and key features. Provide a similarity score between 0 and 1, where 1 is identical and 0 is completely different."
+        },
+        {
+          role: "user",
+          content: [
+            { 
+              type: "text", 
+              text: "Analyze these two boat images and determine their visual similarity. Focus on boat type, size, design features, and overall appearance. Return a JSON with a single 'similarityScore' field with a value between 0 and 1." 
+            },
+            { type: "image_url", image_url: { url: boat1.imageUrl } },
+            { type: "image_url", image_url: { url: boat2.imageUrl } }
+          ]
+        }
+      ],
+      response_format: { type: "json_object" },
+      max_tokens: 300,
+      temperature: 0.2
+    });
+
+    // Parse the response
+    const result = JSON.parse(response.choices[0].message.content);
+    
+    if (typeof result.similarityScore === 'number' && 
+        result.similarityScore >= 0 && 
+        result.similarityScore <= 1) {
+      console.log('OpenAI visual similarity score:', result.similarityScore);
+      return result.similarityScore;
+    } else {
+      console.warn('Invalid similarity score from OpenAI:', result);
+      // Fallback based on type similarity
+      if (boat1.type === boat2.type) {
+        return 0.7;
+      } else if (areBoatTypesRelated(boat1.type, boat2.type)) {
+        return 0.5;
+      } else {
+        return 0.3;
+      }
+    }
+  } catch (error) {
+    console.error('Error calculating visual match score:', error);
+    // Fallback based on type similarity
+    if (boat1.type === boat2.type) {
+      return 0.7;
+    } else if (areBoatTypesRelated(boat1.type, boat2.type)) {
+      return 0.5;
+    } else {
+      return 0.3;
+    }
+  }
+};
+
+/**
  * Calculate overall match score between two boats
  * 
  * Uses a comprehensive scoring system that takes into account boat type,
@@ -159,83 +290,40 @@ const getNameMatchScore = (boat1, boat2) => {
  * 
  * @param {Object} currentBoat - The boat we're finding matches for
  * @param {Object} comparisonBoat - The boat we're comparing against
- * @returns {number} - Match score as a percentage (0-100)
+ * @returns {Promise<number>} - Match score as a percentage (0-100)
  */
-export const calculateMatchScore = (currentBoat, comparisonBoat) => {
+export const calculateMatchScore = async (currentBoat, comparisonBoat) => {
   if (!currentBoat || !comparisonBoat) {
     return 0;
   }
 
   try {
-    // Get visual similarity score
-    const visualMatchScore = calculateVisualMatchScore(currentBoat, comparisonBoat);
-    
     // Compare the main properties with respective weights
     const typeScore = calculateTypeScore(currentBoat, comparisonBoat) * 0.35;
     const lengthScore = calculateLengthScore(currentBoat, comparisonBoat) * 0.25;
     const nameScore = calculateNameScore(currentBoat, comparisonBoat) * 0.15;
     const featureScore = calculateFeatureScore(currentBoat, comparisonBoat) * 0.15;
     
+    // Get visual similarity score (with fallback)
+    let visualMatchScore;
+    try {
+      visualMatchScore = await calculateVisualMatchScore(currentBoat, comparisonBoat);
+    } catch (error) {
+      console.warn('Error in visual match calculation, using fallback:', error);
+      visualMatchScore = 0.5;
+    }
+    
     // Add the visual match score (10% weight)
-    // This would come from the OpenAI API in a real implementation
     const totalScore = typeScore + lengthScore + nameScore + featureScore + (visualMatchScore * 0.1);
     
     // Round to nearest integer and ensure it's between 0-100
     return Math.min(100, Math.max(0, Math.round(totalScore * 100)));
   } catch (error) {
     console.error('Error calculating match score:', error);
-    return 0;
-  }
-};
-
-/**
- * Calculate visual similarity between two boat images using OpenAI Vision API
- * 
- * @param {Object} boat1 - First boat with image
- * @param {Object} boat2 - Second boat with image
- * @returns {number} - Similarity score (0-1)
- */
-const calculateVisualMatchScore = (boat1, boat2) => {
-  // For identical boats or boats with the same image URL, return perfect match
-  if (boat1.id === boat2.id || boat1.imageUrl === boat2.imageUrl) {
-    return 1.0;
-  }
-  
-  // For the specific Boston Whaler case (for demo purposes)
-  if (boat2.name === 'Boston Whaler 345 Conquest' && boat1.type === 'Sport Fishing Express') {
-    return 1.0;
-  }
-
-  // In production, this would call OpenAI's API
-  // Sample implementation would be:
-  /*
-    const response = await fetch('https://api.openai.com/v1/engines/gpt-4o-vision/embeddings', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
-      },
-      body: JSON.stringify({
-        input: [
-          { type: "image_url", image_url: { url: boat1.imageUrl } },
-          { type: "image_url", image_url: { url: boat2.imageUrl } }
-        ]
-      })
-    });
-    
-    const data = await response.json();
-    // Calculate cosine similarity between the two embeddings
-    return calculateCosineSimilarity(data.embeddings[0], data.embeddings[1]);
-  */
-  
-  // For now, we'll simulate a reasonable score based on boat type similarity
-  // as a placeholder for the actual OpenAI API call
-  if (boat1.type === boat2.type) {
-    return 0.85; // Same type boats look similar
-  } else if (areBoatTypesRelated(boat1.type, boat2.type)) {
-    return 0.7; // Related type boats have some visual similarity
-  } else {
-    return 0.5; // Different types have less visual similarity
+    // Provide a fallback score based on type and name to ensure some results
+    const typeScore = calculateTypeScore(currentBoat, comparisonBoat) * 0.6;
+    const nameScore = calculateNameScore(currentBoat, comparisonBoat) * 0.4;
+    return Math.min(100, Math.max(0, Math.round((typeScore + nameScore) * 100)));
   }
 };
 
@@ -250,7 +338,7 @@ const calculateTypeScore = (boat1, boat2) => {
   const boat1Normalized = normalizeBoatData(boat1);
   const boat2Normalized = normalizeBoatData(boat2);
   
-  return getTypeMatchScore(boat1Normalized.type, boat2Normalized.type);
+  return getTypeMatchScore(String(boat1Normalized.type), String(boat2Normalized.type));
 };
 
 /**
@@ -339,23 +427,4 @@ const calculateFeatureScore = (boat1, boat2) => {
   const wordScore = commonWords.length / Math.max(boat1Features.length, boat2Features.length) || 0;
 
   return (categoryScore * 0.6) + (wordScore * 0.4);
-};
-
-/**
- * Check if two boat types are related
- * @param {string} type1 - First boat type
- * @param {string} type2 - Second boat type
- * @returns {boolean} - Whether the types are related
- */
-const areBoatTypesRelated = (type1, type2) => {
-  const typeMap = {
-    'cabin boat': ['center console cabin boat', 'express cruiser', 'sport fishing', 'cruiser'],
-    'center console': ['center console cabin boat', 'dual console', 'walkaround'],
-    'sport fishing': ['sport fishing express', 'center console', 'express cruiser', 'offshore'],
-    'express cruiser': ['cabin boat', 'sport fishing express', 'motor yacht', 'cruiser'],
-    'boston whaler': ['conquest', 'outrage', 'center console', 'dual console'],
-    'fishing boat': ['sport fishing', 'center console', 'walkaround', 'offshore']
-  };
-
-  return typeMap[type1]?.includes(type2) || typeMap[type2]?.includes(type1);
 };
