@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import React, {useState, useEffect, useRef, useMemo, useCallback} from 'react';
 import PropTypes from 'prop-types';
-import { useAllBoats } from '../../hooks/useAllBoats';
+import {useAllBoats} from '../../hooks/useAllBoats';
 import styles from './styles.module.css';
-import { calculateMatchScore } from '../../utils/boatMatching';
+import {calculateMatchScore} from '../../utils/boatMatching';
 import DetailedComparison from '../DetailedComparison';
 import ErrorHandler from '../ErrorHandler';
 
@@ -32,7 +32,7 @@ const SimilarBoats = ({currentBoat}) => {
     const [filteredResults, setFilteredResults] = useState([]);
 
     // Call useAllBoats at the top level
-    const { allBoats } = useAllBoats();
+    const {allBoats} = useAllBoats();
 
     // Update derived state when cache or version changes
     useEffect(() => {
@@ -51,16 +51,12 @@ const SimilarBoats = ({currentBoat}) => {
             return [];
         }
 
-        // First get top 3 matches by match percentage
-        const topMatches = [...filteredResults]
-            .sort((a, b) => b.matchScore - a.matchScore)
-            .slice(0, 3); // Only take top 3 matches
+        // First sort by the selected criteria
+        let sortedBoats;
 
-        // Then sort these top 3 by the selected criteria
         if (sortBy === 'price') {
-            return [...topMatches].sort((a, b) => {
+            sortedBoats = [...filteredResults].sort((a, b) => {
                 // Parse numeric prices, handle missing or non-numeric values
-                // Extract numeric values from price strings if needed (e.g., "$100,000" -> 100000)
                 const getPriceValue = (boat) => {
                     if (typeof boat.price === 'number') return boat.price;
                     if (typeof boat.price === 'string') {
@@ -77,7 +73,7 @@ const SimilarBoats = ({currentBoat}) => {
                 return priceA - priceB; // Sort by price (low to high)
             });
         } else if (sortBy === 'length') {
-            return [...topMatches].sort((a, b) => {
+            sortedBoats = [...filteredResults].sort((a, b) => {
                 // Parse numeric lengths, handle missing or non-numeric values
                 const getLengthValue = (boat) => {
                     if (typeof boat.length === 'number') return boat.length;
@@ -94,10 +90,16 @@ const SimilarBoats = ({currentBoat}) => {
 
                 return lengthA - lengthB; // Sort by length (short to long)
             });
+        } else {
+            // Match percentage sorting (default)
+            sortedBoats = [...filteredResults].sort((a, b) => b.matchScore - a.matchScore);
         }
 
-        // Default: return matches sorted by match percentage (already sorted)
-        return topMatches;
+        // Take top 3 boats based on selected criteria
+        const top3 = sortedBoats.slice(0, 3);
+
+        // Always ensure the display order is by match percentage
+        return [...top3].sort((a, b) => b.matchScore - a.matchScore);
     }, [sortBy, filteredResults]); // Only depend on sortBy and the derived state
 
     // Calculate match scores asynchronously when the current boat changes
@@ -139,14 +141,14 @@ const SimilarBoats = ({currentBoat}) => {
                             message: error.message || 'Unknown error during matching',
                             type: error.type || 'general_error'
                         });
-                        
+
                         // Still add the boat with a fallback score
                         boatsWithScores.push({
                             ...boat, matchScore: 50 // Use 50% as a middle-ground fallback
                         });
                     }
                 }
-                
+
                 // Update error state if any occurred
                 if (newErrors.length > 0) {
                     setApiErrors(newErrors);
@@ -159,7 +161,7 @@ const SimilarBoats = ({currentBoat}) => {
                 setResultsVersion(v => v + 1); // Increment version to trigger re-render
             } catch (error) {
                 console.error('Error processing similar boats:', error);
-                setApiErrors([{ 
+                setApiErrors([{
                     boatId: 'global',
                     message: 'Failed to process matches: ' + (error.message || 'Unknown error'),
                     type: error.type || 'general_error'
@@ -249,7 +251,7 @@ const SimilarBoats = ({currentBoat}) => {
             return (<div className={styles.noMatches}>
                 <p>No similar boats found</p>
                 {apiErrors.length > 0 && (
-                    <ErrorHandler 
+                    <ErrorHandler
                         errors={apiErrors}
                         onRetry={handleRetryMatches}
                         onDismiss={handleDismissErrors}
@@ -262,7 +264,7 @@ const SimilarBoats = ({currentBoat}) => {
 
         return (<div className={styles.boatGrid}>
             {apiErrors.length > 0 && (
-                <ErrorHandler 
+                <ErrorHandler
                     errors={apiErrors}
                     onRetry={handleRetryMatches}
                     onDismiss={handleDismissErrors}
