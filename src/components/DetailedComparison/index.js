@@ -6,52 +6,7 @@ import { BoatColumn } from './BoatColumn';
 import { FeatureComparison } from './FeatureComparison';
 import { ErrorBoundary } from '../ErrorBoundary';
 import FeatureSection from './FeatureSection';
-
-// Enhanced loading spinner component with progress
-const LoadingSpinner = ({ message, progress }) => (
-  <div style={{
-    display: 'flex',
-    flexDirection: 'column',
-    justifyContent: 'center',
-    alignItems: 'center',
-    height: '200px'
-  }}>
-    <div style={{
-      width: '50px',
-      height: '50px',
-      border: '5px solid #f3f3f3',
-      borderTop: '5px solid #3498db',
-      borderRadius: '50%',
-      animation: 'spin 1s linear infinite',
-      marginBottom: '15px'
-    }}></div>
-    <div style={{ textAlign: 'center' }}>
-      <p style={{ margin: '0 0 5px 0' }}>{message}</p>
-      {progress > 0 && progress < 100 && (
-        <div style={{
-          width: '200px',
-          backgroundColor: '#e0e0e0',
-          borderRadius: '10px',
-          height: '8px',
-          overflow: 'hidden'
-        }}>
-          <div style={{
-            width: `${progress}%`,
-            backgroundColor: '#3498db',
-            height: '100%',
-            transition: 'width 0.3s ease'
-          }}></div>
-        </div>
-      )}
-    </div>
-    <style>{`
-      @keyframes spin {
-        0% { transform: rotate(0deg); }
-        100% { transform: rotate(360deg); }
-      }
-    `}</style>
-  </div>
-);
+import LoadingSpinner from '../ui/LoadingSpinner';
 
 /**
  * Component for detailed comparison between two boats
@@ -92,7 +47,6 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
     try {
       return getFeatureComparison(currentBoat, comparisonBoat);
     } catch (error) {
-      // Log error for debugging but don't show to user
       console.error("Error in feature comparison:", error);
 
       // Return a reasonable fallback
@@ -135,11 +89,13 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
 
   // Determine loading message based on status
   const getLoadingMessage = () => {
-    if (analysisStatus.status === 'analyzing') {
-      return `Analyzing boat images...`;
-    }
-    return 'Loading comparison...';
+    return analysisStatus.status === 'analyzing'
+      ? 'Analyzing boat images...'
+      : 'Loading comparison...';
   };
+
+  // Determine if we should show loading state
+  const isLoading = analysisStatus.status === 'analyzing';
 
   return (
     <ErrorBoundary>
@@ -155,10 +111,10 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
           <Suspense fallback={
             <LoadingSpinner
               message={getLoadingMessage()}
-              progress={analysisStatus.status === 'analyzing' ? analysisStatus.progress : 0}
+              progress={isLoading ? analysisStatus.progress : 0}
             />
           }>
-            {analysisStatus.status === 'analyzing' ? (
+            {isLoading ? (
               <LoadingSpinner
                 message={getLoadingMessage()}
                 progress={analysisStatus.progress}
