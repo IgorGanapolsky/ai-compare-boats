@@ -243,28 +243,35 @@
 
 /* Button for showing more features */
 .moreFeaturesButton {
-  background: none;
+  background-color: #f0f6ff;
   border: none;
   color: #336699;
   font-size: 0.85rem;
   font-weight: 500;
-  padding: 5px 0;
-  margin-top: 5px;
+  padding: 5px 12px;
+  margin-top: 8px;
   cursor: pointer;
-  text-align: left;
-  display: flex;
+  text-align: center;
+  border-radius: 20px;
+  display: inline-flex;
   align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .moreFeaturesButton:hover {
-  text-decoration: underline;
+  background-color: #e0ecff;
+  text-decoration: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.moreFeaturesButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(51, 102, 153, 0.3);
 }
 
 /* Make sure clicking on the more button doesn't trigger the card */
-.moreFeaturesButton:focus {
-  outline: none;
-}
-
 .moreFeaturesButton:before {
   content: "";
   margin-right: 5px;

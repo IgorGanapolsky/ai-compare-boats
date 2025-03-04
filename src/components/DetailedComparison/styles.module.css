@@ -223,25 +223,35 @@
 }
 
 .expandButton {
-  color: #336699;
-  background: none;
+  background-color: #f0f6ff;
   border: none;
-  padding: 5px 0;
+  color: #336699;
+  font-size: 0.9rem;
+  font-weight: 500;
+  padding: 5px 12px;
   margin-top: 10px;
   cursor: pointer;
-  font-weight: 500;
-  display: flex;
+  border-radius: 20px;
+  display: inline-flex;
   align-items: center;
-  font-size: 0.9rem;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 .expandButton:hover {
-  text-decoration: underline;
+  background-color: #e0ecff;
+  text-decoration: none;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.expandButton:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(51, 102, 153, 0.3);
 }
 
 .expandIcon {
-  margin-right: 5px;
-  font-size: 1.2rem;
+  margin-right: 6px;
+  font-size: 1rem;
   line-height: 1;
 }
 

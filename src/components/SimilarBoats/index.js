@@ -55,6 +55,7 @@ const SimilarBoats = ({ currentBoat }) => {
     const [imgErrors, setImgErrors] = useState({});
     const [apiErrors, setApiErrors] = useState([]);
     const [showErrorDetails, setShowErrorDetails] = useState(false);
+    const [analysisStatus, setAnalysisStatus] = useState({ status: 'idle', progress: 0 });
 
     // Cache for storing calculated match results
     const matchResultsCache = useRef({
@@ -272,19 +273,40 @@ const SimilarBoats = ({ currentBoat }) => {
         setApiErrors([]);
     };
 
+    // Add an effect to listen for analysis status events
+    useEffect(() => {
+        const handleAnalysisStatus = (event) => {
+            setAnalysisStatus(event.detail);
+        };
+
+        window.addEventListener('boat-analysis-status', handleAnalysisStatus);
+
+        return () => {
+            window.removeEventListener('boat-analysis-status', handleAnalysisStatus);
+        };
+    }, []);
+
     // Render the content based on loading and data states
     const renderContent = () => {
-        if (loading) {
-            return (<div className={styles.loadingContainer}>
-                <p>Calculating matches...</p>
-                <div className={styles.loadingSpinner}></div>
-            </div>);
+        // Show unified loading state for both calculations and image analysis
+        if (loading || analysisStatus.status === 'analyzing') {
+            const message = analysisStatus.status === 'analyzing'
+                ? `Analyzing boat images... ${analysisStatus.progress}%`
+                : 'Finding similar boats...';
+
+            return (
+                <div className={styles.loadingContainer}>
+                    <p>{message}</p>
+                    <div className={styles.loadingSpinner}></div>
+                </div>
+            );
         }
 
         if (displayedBoats.length === 0) {
             return (<div className={styles.noMatches}>
                 <p>No similar boats found</p>
-                {apiErrors.length > 0 && (
+                {/* Only show errors in development, not for end users */}
+                {process.env.NODE_ENV === 'development' && apiErrors.length > 0 && (
                     <ErrorHandler
                         errors={apiErrors}
                         onRetry={handleRetryMatches}
@@ -297,7 +319,8 @@ const SimilarBoats = ({ currentBoat }) => {
         }
 
         return (<div className={styles.boatGrid}>
-            {apiErrors.length > 0 && (
+            {/* Only show errors in development, not for end users */}
+            {process.env.NODE_ENV === 'development' && apiErrors.length > 0 && (
                 <ErrorHandler
                     errors={apiErrors}
                     onRetry={handleRetryMatches}
