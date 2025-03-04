@@ -1,63 +1,54 @@
 import React, { memo } from 'react';
 import styles from './styles.module.css';
+import FeatureSection from './FeatureSection';
 
-const FeatureList = memo(({ features, emptyMessage, featureClassName }) => (
-    <ul className={styles.featureList} role="list">
-        {features.length > 0 ? (
-            features.map((feature, index) => (
-                <li
-                    key={`${feature}-${index}`}
-                    className={styles[featureClassName]}
-                    role="listitem"
-                >
-                    {feature}
-                </li>
-            ))
-        ) : (
-            <li className={styles.noFeatures} role="listitem">{emptyMessage}</li>
-        )}
-    </ul>
-));
-FeatureList.displayName = 'FeatureList';
+/**
+ * Displays a comparison of features between two boats
+ * 
+ * @param {Object} props - Component props
+ * @param {Object} props.featureAnalysis - Analysis of feature comparison
+ * @param {Array} props.featureAnalysis.commonFeatures - Features common to both boats
+ * @param {Array} props.featureAnalysis.uniqueToFirst - Features unique to the first boat
+ * @param {Array} props.featureAnalysis.uniqueToSecond - Features unique to the second boat
+ * @param {string} props.comparisonBoatName - Name of the boat being compared
+ * @returns {JSX.Element} - Rendered component
+ */
+export const FeatureComparison = memo(({ featureAnalysis, comparisonBoatName }) => {
+    // Handle missing or invalid analysis
+    const {
+        commonFeatures = [],
+        uniqueToFirst = [],
+        uniqueToSecond = []
+    } = featureAnalysis || {};
 
-const FeatureCategory = memo(({ title, features, emptyMessage, featureClassName }) => (
-    <div className={styles.featureCategory}>
-        <h4>{title}</h4>
-        <FeatureList
-            features={features}
-            emptyMessage={emptyMessage}
-            featureClassName={featureClassName}
-        />
-    </div>
-));
-FeatureCategory.displayName = 'FeatureCategory';
+    return (
+        <div className={styles.featureComparisonSection}>
+            <h3 className={styles.comparisonSectionTitle}>Feature Comparison</h3>
 
-export const FeatureComparison = memo(({ featureAnalysis, comparisonBoatName }) => (
-    <div className={styles.featureComparison}>
-        <h3>Feature Comparison</h3>
+            <div className={styles.comparisonColumns}>
+                <div className={styles.comparisonColumn}>
+                    <FeatureSection
+                        title="Common Features"
+                        features={commonFeatures}
+                    />
+                </div>
 
-        <div className={styles.featureCategories}>
-            <FeatureCategory
-                title="Common Features"
-                features={featureAnalysis.commonFeatures}
-                emptyMessage="No common features found"
-                featureClassName="commonFeature"
-            />
+                <div className={styles.comparisonColumn}>
+                    <FeatureSection
+                        title="Only in Your Boat"
+                        features={uniqueToFirst}
+                    />
+                </div>
 
-            <FeatureCategory
-                title="Only in Your Boat"
-                features={featureAnalysis.uniqueToUploaded}
-                emptyMessage="No unique features"
-                featureClassName="uniqueFeature1"
-            />
-
-            <FeatureCategory
-                title={`Only in ${comparisonBoatName}`}
-                features={featureAnalysis.uniqueToMatch}
-                emptyMessage="No unique features"
-                featureClassName="uniqueFeature2"
-            />
+                <div className={styles.comparisonColumn}>
+                    <FeatureSection
+                        title={`Only in ${comparisonBoatName || 'Comparison Boat'}`}
+                        features={uniqueToSecond}
+                    />
+                </div>
+            </div>
         </div>
-    </div>
-));
+    );
+});
+
 FeatureComparison.displayName = 'FeatureComparison'; 

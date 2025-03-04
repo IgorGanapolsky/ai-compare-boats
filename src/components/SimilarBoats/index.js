@@ -1,10 +1,44 @@
-import React, {useState, useEffect, useRef, useMemo, useCallback} from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import PropTypes from 'prop-types';
-import {useAllBoats} from '../../hooks/useAllBoats';
+import { useAllBoats } from '../../hooks/useAllBoats';
 import styles from './styles.module.css';
-import {calculateMatchScore} from '../../utils/boatMatching';
-import DetailedComparison from '../DetailedComparison';
+import { calculateMatchScore } from '../../utils/boatMatching';
+import { DetailedComparison } from '../DetailedComparison';
 import ErrorHandler from '../ErrorHandler';
+
+// Add a FeatureList component for in-line expansion
+const FeatureList = ({ features, maxInitialFeatures = 3 }) => {
+    const [expanded, setExpanded] = useState(false);
+
+    if (!features || features.length === 0) {
+        return null;
+    }
+
+    const hasMore = features.length > maxInitialFeatures;
+    const displayedFeatures = expanded ? features : features.slice(0, maxInitialFeatures);
+
+    return (
+        <div className={styles.featuresList}>
+            {displayedFeatures.map((feature, index) => (
+                <div key={index} className={styles.featureItem}>
+                    {feature}
+                </div>
+            ))}
+
+            {hasMore && (
+                <button
+                    className={styles.moreFeaturesButton}
+                    onClick={(e) => {
+                        e.stopPropagation(); // Prevent triggering the boat card click
+                        setExpanded(!expanded);
+                    }}
+                >
+                    {expanded ? 'Show less' : `+${features.length - maxInitialFeatures} more`}
+                </button>
+            )}
+        </div>
+    );
+};
 
 /**
  * SimilarBoats component displays the top 3 boats similar to the current boat.
@@ -13,7 +47,7 @@ import ErrorHandler from '../ErrorHandler';
  * @param {Object} props.currentBoat - The currently selected boat
  * @returns {JSX.Element} - Rendered component
  */
-const SimilarBoats = ({currentBoat}) => {
+const SimilarBoats = ({ currentBoat }) => {
     const [selectedBoat, setSelectedBoat] = useState(null);
     const [sortBy, setSortBy] = useState('match'); // Default sort by match percentage
     const [loading, setLoading] = useState(false);
@@ -32,7 +66,7 @@ const SimilarBoats = ({currentBoat}) => {
     const [filteredResults, setFilteredResults] = useState([]);
 
     // Call useAllBoats at the top level
-    const {allBoats} = useAllBoats();
+    const { allBoats } = useAllBoats();
 
     // Update derived state when cache or version changes
     useEffect(() => {
@@ -106,7 +140,7 @@ const SimilarBoats = ({currentBoat}) => {
     useEffect(() => {
         const calculateMatches = async () => {
             if (!currentBoat || filteredBoats.length === 0) {
-                matchResultsCache.current = {currentBoatId: null, results: []};
+                matchResultsCache.current = { currentBoatId: null, results: [] };
                 setResultsVersion(v => v + 1); // Increment version to trigger re-render
                 return;
             }
@@ -166,7 +200,7 @@ const SimilarBoats = ({currentBoat}) => {
                     message: 'Failed to process matches: ' + (error.message || 'Unknown error'),
                     type: error.type || 'general_error'
                 }]);
-                matchResultsCache.current = {currentBoatId: null, results: []};
+                matchResultsCache.current = { currentBoatId: null, results: [] };
                 setResultsVersion(v => v + 1); // Increment version to trigger re-render
             } finally {
                 setLoading(false);
@@ -288,9 +322,9 @@ const SimilarBoats = ({currentBoat}) => {
                         ref={(el) => attachImageRef(el, boat.id)}
                     />
                     <div className={styles.matchBadge}>
-                <span className={getMatchScoreClass(boat.matchScore)}>
-                  {formatMatchPercentage(boat.matchScore)} Match
-                </span>
+                        <span className={getMatchScoreClass(boat.matchScore)}>
+                            {formatMatchPercentage(boat.matchScore)} Match
+                        </span>
                     </div>
                 </div>
 
@@ -322,16 +356,12 @@ const SimilarBoats = ({currentBoat}) => {
                         </div>)}
                     </div>
 
-                    {boat.features && boat.features.length > 0 && (<div className={styles.featuresSection}>
-                        <div className={styles.featuresList}>
-                            {boat.features.slice(0, 3).map((feature, index) => (
-                                <div key={index} className={styles.featureItem}>
-                                    {feature}
-                                </div>))}
-                            {boat.features.length > 3 && (
-                                <div className={styles.moreLink}>+{boat.features.length - 3} more</div>)}
+                    {boat.features && boat.features.length > 0 && (
+                        <div className={styles.featuresSection}>
+                            <div className={styles.sectionOval}>Features</div>
+                            <FeatureList features={boat.features} maxInitialFeatures={3} />
                         </div>
-                    </div>)}
+                    )}
                 </div>
             </button>))}
         </div>);

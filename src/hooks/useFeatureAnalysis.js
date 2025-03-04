@@ -2,7 +2,7 @@ import { useMemo, useCallback } from 'react';
 
 const SIMILARITY_THRESHOLD = 0.5;
 
-export const useFeatureAnalysis = (currentBoat, comparisonBoat) => {
+export const useFeatureAnalysis = () => {
     const normalizeFeature = useCallback((feature) => {
         if (typeof feature !== 'string') return '';
 
@@ -59,49 +59,55 @@ export const useFeatureAnalysis = (currentBoat, comparisonBoat) => {
         return allFeatures.find(f => normalizeFeature(f) === normalizedFeature) || normalizedFeature;
     }, [normalizeFeature]);
 
-    return useMemo(() => {
-        if (!currentBoat || !comparisonBoat) {
+    /**
+     * Compares features between two boats and returns similarity metrics
+     * @param {Object} boat1 - First boat to compare
+     * @param {Object} boat2 - Second boat to compare
+     * @returns {Object} Comparison results with common and unique features
+     */
+    const getFeatureComparison = useCallback((boat1, boat2) => {
+        if (!boat1 || !boat2) {
             return {
-                matchRate: 0,
                 commonFeatures: [],
-                uniqueToUploaded: [],
-                uniqueToMatch: []
+                uniqueToFirst: [],
+                uniqueToSecond: [],
+                matchRate: 0
             };
         }
 
-        const currentFeatures = extractFeaturesFromBoat(currentBoat);
-        const comparisonFeatures = extractFeaturesFromBoat(comparisonBoat);
+        const features1 = Array.from(extractFeaturesFromBoat(boat1));
+        const features2 = Array.from(extractFeaturesFromBoat(boat2));
 
-        const commonFeatures = [...currentFeatures].filter(feature =>
-            [...comparisonFeatures].some(compFeature => areSimilarFeatures(feature, compFeature))
+        const commonFeatures = features1.filter(f =>
+            features2.some(f2 => areSimilarFeatures(f, f2))
         );
 
-        const uniqueToUploaded = [...currentFeatures].filter(feature =>
-            ![...comparisonFeatures].some(compFeature => areSimilarFeatures(feature, compFeature))
+        const uniqueToFirst = features1.filter(f =>
+            !features2.some(f2 => areSimilarFeatures(f, f2))
         );
 
-        const uniqueToMatch = [...comparisonFeatures].filter(feature =>
-            ![...currentFeatures].some(currFeature => areSimilarFeatures(feature, currFeature))
+        const uniqueToSecond = features2.filter(f =>
+            !features1.some(f2 => areSimilarFeatures(f, f2))
         );
 
-        const totalFeatures = commonFeatures.length + uniqueToUploaded.length + uniqueToMatch.length;
-        const featureMatchRate = totalFeatures > 0
-            ? Math.round((commonFeatures.length / totalFeatures) * 100)
-            : 0;
+        // Calculate match rate
+        let matchRate = 0;
+        const totalFeatures = features1.length + features2.length;
 
-        const matchRate = featureMatchRate;
+        if (totalFeatures > 0) {
+            // Count common features twice (once for each boat)
+            matchRate = Math.round((commonFeatures.length * 2) / totalFeatures * 100);
+        }
 
         return {
-            matchRate,
-            commonFeatures: commonFeatures.map(f => findOriginalText(f, currentBoat)),
-            uniqueToUploaded: uniqueToUploaded.map(f => findOriginalText(f, currentBoat)),
-            uniqueToMatch: uniqueToMatch.map(f => findOriginalText(f, comparisonBoat))
+            commonFeatures: commonFeatures.map(f => findOriginalText(f, boat1)),
+            uniqueToFirst: uniqueToFirst.map(f => findOriginalText(f, boat1)),
+            uniqueToSecond: uniqueToSecond.map(f => findOriginalText(f, boat2)),
+            matchRate
         };
-    }, [
-        currentBoat,
-        comparisonBoat,
-        extractFeaturesFromBoat,
-        areSimilarFeatures,
-        findOriginalText
-    ]);
+    }, [extractFeaturesFromBoat, areSimilarFeatures, findOriginalText]);
+
+    return {
+        getFeatureComparison
+    };
 }; 

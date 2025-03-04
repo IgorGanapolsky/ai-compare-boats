@@ -74,7 +74,7 @@
   border-radius: 10px;
   overflow: visible;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  transition: transform 0.2s, box-shadow 0.2s;
   cursor: pointer;
   background-color: white;
   display: flex;
@@ -150,7 +150,7 @@
 
 /* Boat information section */
 .boatInfo {
-  padding: 1.25rem;
+  padding: 15px;
   flex-grow: 1;
   display: flex;
   flex-direction: column;
@@ -215,32 +215,69 @@
 
 /* Features section */
 .featuresSection {
-  margin-top: auto;
-  border-top: 1px solid #e2e8f0;
-  padding-top: 1rem;
-  padding-bottom: 0.5rem;
+  margin-top: 15px;
 }
 
 .featuresList {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
+  gap: 5px;
+  margin-top: 8px;
 }
 
 .featureItem {
   font-size: 0.85rem;
-  color: #475569;
-  word-wrap: break-word;
-  word-break: break-word;
-  line-height: 1.4;
+  color: #555;
+  position: relative;
+  padding-left: 15px;
+  text-align: left;
 }
 
-.moreLink {
-  font-size: 0.8rem;
-  color: #3b82f6;
-  cursor: pointer;
-  margin-top: 0.5rem;
+.featureItem:before {
+  content: "•";
+  color: #336699;
+  font-weight: bold;
+  position: absolute;
+  left: 0;
+}
+
+/* Button for showing more features */
+.moreFeaturesButton {
+  background: none;
+  border: none;
+  color: #336699;
+  font-size: 0.85rem;
   font-weight: 500;
+  padding: 5px 0;
+  margin-top: 5px;
+  cursor: pointer;
+  text-align: left;
+  display: flex;
+  align-items: center;
+}
+
+.moreFeaturesButton:hover {
+  text-decoration: underline;
+}
+
+/* Make sure clicking on the more button doesn't trigger the card */
+.moreFeaturesButton:focus {
+  outline: none;
+}
+
+.moreFeaturesButton:before {
+  content: "";
+  margin-right: 5px;
+}
+
+/* Ensure the moreLink style is still used if needed */
+.moreLink {
+  color: #336699;
+  cursor: pointer;
+  font-size: 0.85rem;
+  font-weight: 500;
+  margin-top: 5px;
+  text-align: left;
 }
 
 .popupOverlay {
@@ -398,4 +435,16 @@
 .noMatches p {
   font-size: 18px;
   margin-bottom: 15px;
+}
+
+/* Section Oval styling */
+.sectionOval {
+  background-color: #f0f6ff;
+  border-radius: 20px;
+  padding: 5px 15px;
+  display: inline-block;
+  margin-bottom: 10px;
+  color: #336699;
+  font-weight: 500;
+  font-size: 0.9rem;
 }

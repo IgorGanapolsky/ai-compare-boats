@@ -63,46 +63,65 @@
 }
 
 .comparisonContainer {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.comparisonHeader {
+  margin-bottom: 20px;
+}
+
+.comparisonGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 2rem;
-  padding: 2rem;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 30px;
+  align-items: start;
+}
+
+.boatColumnWrapper {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
 }
 
 .boatColumn {
-  display: flex;
-  flex-direction: column;
+  padding: 20px;
+  border-bottom: 1px solid #eee;
 }
 
 .boatHeader {
   text-align: center;
-  margin-bottom: 1.5rem;
+  margin-bottom: 15px;
 }
 
 .boatHeader h3 {
-  margin: 0 0 1rem 0;
-  color: #334155;
-  font-size: 1.25rem;
+  font-size: 1.1rem;
+  color: #333;
+  margin-bottom: 10px;
 }
 
 .boatHeader h4 {
-  margin: 1rem 0 0 0;
-  color: #1e293b;
-  font-size: 1.1rem;
+  font-size: 1.2rem;
+  margin: 10px 0;
+  font-weight: 600;
 }
 
 .boatImage {
   width: 100%;
-  height: 200px;
+  height: 180px;
   object-fit: cover;
   border-radius: 8px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .matchRateDisplay {
   display: flex;
   justify-content: center;
-  margin-bottom: 1rem;
+  margin-bottom: 15px;
 }
 
 .matchCircle {
@@ -110,134 +129,155 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 80px;
-  height: 80px;
+  width: 65px;
+  height: 65px;
   border-radius: 50%;
-  background-color: var(--match-color, #3b82f6);
-  color: white;
   font-weight: bold;
+  color: white;
+  background-color: #ddd;
 }
 
 .matchCircle[data-match="high"] {
-  --match-color: #10b981;
+  background-color: #4CAF50;
 }
 
 .matchCircle[data-match="medium"] {
-  --match-color: #f59e0b;
+  background-color: #FFC107;
 }
 
 .matchCircle[data-match="low"] {
-  --match-color: #64748b;
-}
-
-.matchCircle span:first-child {
-  font-size: 1.5rem;
-  line-height: 1;
+  background-color: #F44336;
 }
 
 .matchLabel {
-  font-size: 0.8rem;
-  margin-top: 0.25rem;
+  font-size: 0.7rem;
+  font-weight: 400;
 }
 
 .boatDetails {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+  padding: 15px 0;
+}
+
+.detailsGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin-top: 10px;
 }
 
 .detailItem {
   display: flex;
   justify-content: space-between;
-  border-bottom: 1px solid #f1f5f9;
-  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 5px;
 }
 
 .detailLabel {
-  color: #64748b;
-  font-size: 0.9rem;
+  font-weight: 500;
+  color: #666;
 }
 
 .detailValue {
-  color: #334155;
+  color: #333;
+}
+
+.featuresContainer {
+  padding: 20px;
+}
+
+.sectionOval {
+  background-color: #f0f6ff;
+  border-radius: 20px;
+  padding: 5px 15px;
+  display: inline-block;
+  margin-bottom: 10px;
+  color: #336699;
   font-weight: 500;
   font-size: 0.9rem;
 }
 
-.featureComparison {
-  padding: 0 2rem 2rem;
-}
-
-.featureComparison h3 {
-  margin: 0 0 1.5rem 0;
-  color: #1e293b;
-  font-size: 1.25rem;
-  border-bottom: 1px solid #e2e8f0;
-  padding-bottom: 0.75rem;
-}
-
-.featureCategories {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 1.5rem;
-}
-
-.featureCategory {
-  background-color: #f8fafc;
-  border-radius: 8px;
-  padding: 1rem;
-}
-
-.featureCategory h4 {
-  margin: 0 0 1rem 0;
-  color: #334155;
-  font-size: 1rem;
-  text-align: center;
+.featureSection {
+  margin-bottom: 25px;
 }
 
 .featureList {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-  max-height: 200px;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
 }
 
-.featureList li {
-  padding: 0.5rem;
-  margin-bottom: 0.5rem;
-  border-radius: 6px;
+.featureItem {
+  display: flex;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #333;
+}
+
+.featureItem:before {
+  content: "•";
+  color: #336699;
+  font-weight: bold;
+  margin-right: 8px;
+  font-size: 1.2rem;
+}
+
+.expandButton {
+  color: #336699;
+  background: none;
+  border: none;
+  padding: 5px 0;
+  margin-top: 10px;
+  cursor: pointer;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
   font-size: 0.9rem;
 }
 
-.commonFeature {
-  background-color: #dcfce7;
-  color: #166534;
+.expandButton:hover {
+  text-decoration: underline;
 }
 
-.uniqueFeature1 {
-  background-color: #dbeafe;
-  color: #1e40af;
-}
-
-.uniqueFeature2 {
-  background-color: #fef3c7;
-  color: #92400e;
-}
-
-.noFeatures {
-  background-color: #f1f5f9;
-  color: #64748b;
-  text-align: center;
-  font-style: italic;
+.expandIcon {
+  margin-right: 5px;
+  font-size: 1.2rem;
+  line-height: 1;
 }
 
 @media (max-width: 768px) {
-  .comparisonContainer {
+  .comparisonGrid {
     grid-template-columns: 1fr;
   }
-  
-  .featureCategories {
+}
+
+/* Feature Comparison section */
+.featureComparisonSection {
+  padding: 20px;
+  margin-top: 10px;
+  border-top: 1px solid #eee;
+}
+
+.comparisonSectionTitle {
+  font-size: 1.2rem;
+  margin-bottom: 20px;
+  color: #333;
+}
+
+.comparisonColumns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 25px;
+}
+
+.comparisonColumn {
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 15px;
+}
+
+@media (max-width: 768px) {
+  .comparisonColumns {
     grid-template-columns: 1fr;
   }
 }

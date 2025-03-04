@@ -25,30 +25,6 @@ const MatchRateDisplay = memo(({ matchRate }) => (
 ));
 MatchRateDisplay.displayName = 'MatchRateDisplay';
 
-const BoatDetails = memo(({ boat, showPrice, showLocation }) => {
-    const { getBoatSize } = useBoatSize();
-
-    return (
-        <div className={styles.boatDetails}>
-            <DetailItem label="Size" value={getBoatSize(boat)} />
-            <DetailItem label="Type" value={boat.type} />
-            <DetailItem label="Engine" value={boat.engine} />
-            <DetailItem label="Hull" value={boat.hullMaterial} />
-            {showPrice && (
-                <DetailItem
-                    label="Price"
-                    value={boat.price ? new Intl.NumberFormat('en-US', {
-                        style: 'currency',
-                        currency: 'USD'
-                    }).format(boat.price) : undefined}
-                />
-            )}
-            {showLocation && <DetailItem label="Location" value={boat.location} />}
-        </div>
-    );
-});
-BoatDetails.displayName = 'BoatDetails';
-
 const DetailItem = memo(({ label, value }) => (
     <div className={styles.detailItem}>
         <span className={styles.detailLabel}>{label}:</span>
@@ -56,6 +32,33 @@ const DetailItem = memo(({ label, value }) => (
     </div>
 ));
 DetailItem.displayName = 'DetailItem';
+
+const BoatDetails = memo(({ boat, showPrice, showLocation }) => {
+    const { getBoatSize } = useBoatSize();
+
+    return (
+        <div className={styles.boatDetails}>
+            <div className={styles.sectionOval}>Specifications</div>
+            <div className={styles.detailsGrid}>
+                <DetailItem label="Size" value={getBoatSize(boat)} />
+                <DetailItem label="Type" value={boat.type} />
+                <DetailItem label="Engine" value={boat.engine} />
+                <DetailItem label="Hull" value={boat.hullMaterial} />
+                {showPrice && (
+                    <DetailItem
+                        label="Price"
+                        value={boat.price ? new Intl.NumberFormat('en-US', {
+                            style: 'currency',
+                            currency: 'USD'
+                        }).format(boat.price) : undefined}
+                    />
+                )}
+                {showLocation && <DetailItem label="Location" value={boat.location} />}
+            </div>
+        </div>
+    );
+});
+BoatDetails.displayName = 'BoatDetails';
 
 export const BoatColumn = memo(({ boat, title, matchRate, showPrice, showLocation }) => (
     <div className={styles.boatColumn}>

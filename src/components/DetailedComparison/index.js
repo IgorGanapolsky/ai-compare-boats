@@ -1,11 +1,11 @@
-import React, { Suspense } from 'react';
+import React, { Suspense, memo, useMemo } from 'react';
 import styles from './styles.module.css';
 import { useFeatureAnalysis } from '../../hooks/useFeatureAnalysis';
 import { ComparisonHeader } from './ComparisonHeader';
 import { BoatColumn } from './BoatColumn';
 import { FeatureComparison } from './FeatureComparison';
 import { ErrorBoundary } from '../ErrorBoundary';
-import type { DetailedComparisonProps } from './types';
+import FeatureSection from './FeatureSection';
 
 // Simple inline LoadingSpinner component
 const LoadingSpinner = () => (
@@ -40,12 +40,57 @@ const LoadingSpinner = () => (
  * @param {Function} props.onClose - Function to handle closing the comparison
  * @returns {JSX.Element} - Rendered component
  */
-const DetailedComparison: React.FC<DetailedComparisonProps> = ({ currentBoat, comparisonBoat, onClose }) => {
-  const featureAnalysis = useFeatureAnalysis(currentBoat, comparisonBoat);
+export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }) => {
+  const { getFeatureComparison } = useFeatureAnalysis();
 
+  // Calculate feature comparison with error handling
+  const featureAnalysis = useMemo(() => {
+    if (!currentBoat || !comparisonBoat) {
+      return {
+        commonFeatures: [],
+        uniqueToFirst: [],
+        uniqueToSecond: [],
+        matchRate: 0
+      };
+    }
+
+    try {
+      return getFeatureComparison(currentBoat, comparisonBoat);
+    } catch (error) {
+      console.error("Error in feature comparison:", error);
+      return {
+        commonFeatures: [],
+        uniqueToFirst: [],
+        uniqueToSecond: [],
+        matchRate: 50 // Fallback value
+      };
+    }
+  }, [currentBoat, comparisonBoat, getFeatureComparison]);
+
+  // If no boats are provided, we shouldn't render anything
   if (!currentBoat || !comparisonBoat) {
+    console.error("DetailedComparison: Missing boat data");
     return null;
   }
+
+  // Get the feature sets for each boat
+  const getFormattedFeatures = (boat) => {
+    if (!boat) return {};
+
+    // Extract and format all available feature categories
+    return {
+      keyFeatures: Array.isArray(boat.keyFeatures) ? boat.keyFeatures : [],
+      amenities: Array.isArray(boat.amenities) ? boat.amenities : [],
+      technicalSpecs: [
+        boat.engine && `Engine: ${boat.engine}`,
+        boat.hullMaterial && `Hull: ${boat.hullMaterial}`,
+        boat.fuelType && `Fuel: ${boat.fuelType}`,
+        boat.propulsion && `Propulsion: ${boat.propulsion}`
+      ].filter(Boolean)
+    };
+  };
+
+  const userBoatFeatures = getFormattedFeatures(currentBoat);
 
   return (
     <ErrorBoundary>
@@ -76,6 +121,23 @@ const DetailedComparison: React.FC<DetailedComparisonProps> = ({ currentBoat, co
               />
             </div>
 
+            <div className={styles.featuresContainer}>
+              <FeatureSection
+                title="Key Features"
+                features={userBoatFeatures.keyFeatures}
+              />
+
+              <FeatureSection
+                title="Amenities"
+                features={userBoatFeatures.amenities}
+              />
+
+              <FeatureSection
+                title="Technical Specs"
+                features={userBoatFeatures.technicalSpecs}
+              />
+            </div>
+
             <FeatureComparison
               featureAnalysis={featureAnalysis}
               comparisonBoatName={comparisonBoat.name}
@@ -85,6 +147,6 @@ const DetailedComparison: React.FC<DetailedComparisonProps> = ({ currentBoat, co
       </div>
     </ErrorBoundary>
   );
-};
+});
 
-export default DetailedComparison;
+DetailedComparison.displayName = 'DetailedComparison';
