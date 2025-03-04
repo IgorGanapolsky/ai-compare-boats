@@ -1,5 +1,7 @@
 // Boat matching utilities
 
+import { analyzeBoatImage } from '../services/imageAnalysisService';
+
 /**
  * Extracts boat length from various data fields
  * @param {Object} boat - Boat object with possible length/size fields
@@ -152,53 +154,61 @@ const calculateLengthMatchScore = (length1, length2) => {
  * @param {Array<string>} features2 - Second boat features
  * @returns {number} - Match score between 0-1
  */
-const calculateFeatureMatchScore = (features1, features2) => {
-    if (!features1?.length || !features2?.length) return 0;
+const calculateFeatureMatchScore = (boat1, boat2) => {
+    if (!boat1 || !boat2) return 0;
 
-    const normalizeFeatures = (features) => {
-        return features.flatMap(feature => {
-            if (typeof feature !== 'string') return [];
-            return feature.toLowerCase()
-                .replace(/[.,]/g, '')
-                .split(/\s+/)
-                .filter(word => !['and', 'with', 'the', 'a', 'an', 'for', 'to', 'in', 'on', 'at'].includes(word));
-        });
-    };
+    let matchPoints = 0;
+    let totalPoints = 0;
 
-    const featureCategories = {
-        navigation: ['navigation', 'gps', 'radar', 'electronics', 'helm', 'chart', 'plotter', 'autopilot'],
-        comfort: ['seating', 'cabin', 'console', 'comfort', 'protection', 'galley', 'head', 'berth', 'sleeping'],
-        safety: ['safety', 'rails', 'handrails', 'protection', 'life', 'jacket', 'fire'],
-        fishing: ['fishing', 'rod', 'holders', 'livewell', 'tackle', 'bait', 'tuna', 'offshore'],
-        hull: ['hull', 'deck', 'stepped', 'deep-v', 'fiberglass', 'construction'],
-        power: ['engine', 'power', 'mercury', 'yamaha', 'outboard', 'inboard', 'sterndrive', 'jet']
-    };
+    // Compare boat type
+    if (boat1.type && boat2.type) {
+        totalPoints += 25;
+        if (boat1.type.toLowerCase() === boat2.type.toLowerCase()) {
+            matchPoints += 25;
+        }
+    }
 
-    const categorizeFeature = (word) => {
-        for (const [category, keywords] of Object.entries(featureCategories)) {
-            if (keywords.some(keyword => word.includes(keyword))) {
-                return category;
+    // Compare size/length (within 10%)
+    if (boat1.length && boat2.length) {
+        const length1 = parseFloat(boat1.length);
+        const length2 = parseFloat(boat2.length);
+
+        if (!isNaN(length1) && !isNaN(length2)) {
+            totalPoints += 25;
+            const sizeDiff = Math.abs(length1 - length2);
+            const sizePercentDiff = sizeDiff / Math.max(length1, length2);
+
+            if (sizePercentDiff <= 0.1) { // Within 10%
+                matchPoints += 25;
+            } else if (sizePercentDiff <= 0.2) { // Within 20%
+                matchPoints += 15;
             }
         }
-        return null;
-    };
+    }
 
-    const features1Normalized = normalizeFeatures(features1);
-    const features2Normalized = normalizeFeatures(features2);
+    // Compare features
+    const features1 = extractFeaturesFromBoat(boat1);
+    const features2 = extractFeaturesFromBoat(boat2);
 
-    // Group features by category
-    const features1Categories = new Set(features1Normalized.map(categorizeFeature).filter(Boolean));
-    const features2Categories = new Set(features2Normalized.map(categorizeFeature).filter(Boolean));
+    if (features1.size > 0 && features2.size > 0) {
+        totalPoints += 50;
 
-    // Calculate category overlap
-    const commonCategories = [...features1Categories].filter(cat => features2Categories.has(cat));
-    const categoryScore = commonCategories.length / Math.max(features1Categories.size, features2Categories.size) || 0;
+        let commonFeatureCount = 0;
+        for (const feature1 of features1) {
+            for (const feature2 of features2) {
+                if (areSimilarFeatures(feature1, feature2)) {
+                    commonFeatureCount++;
+                    break;
+                }
+            }
+        }
 
-    // Calculate word-level similarity
-    const commonWords = features1Normalized.filter(word => features2Normalized.includes(word));
-    const wordScore = commonWords.length / Math.max(features1Normalized.length, features2Normalized.length) || 0;
+        const featureMatchRate = commonFeatureCount / Math.max(features1.size, features2.size);
+        matchPoints += Math.round(featureMatchRate * 50);
+    }
 
-    return (categoryScore * 0.6) + (wordScore * 0.4);
+    // Calculate final score (avoid division by zero)
+    return totalPoints > 0 ? Math.round((matchPoints / totalPoints) * 100) : 0;
 };
 
 /**
@@ -282,7 +292,7 @@ const calculateVisualMatchScore = async (boat1, boat2) => {
 
         try {
             // Import OpenAI from the service
-            const {compareBoatImages} = await import('../services/openaiService');
+            const { compareBoatImages } = await import('../services/openaiService');
 
             // Call the OpenAI service to compare images
             console.log(`Comparing images between ${boat1.name || 'Unknown'} and ${boat2.name || 'Unknown'}`);
@@ -404,98 +414,137 @@ const calculateVisualScore = async (boat1, boat2) => {
 };
 
 /**
- * Checks if a boat is a Boston Whaler 345 Conquest model
- * @param {Object} boat - Boat to check
- * @returns {boolean} - True if boat is a Boston Whaler 345 Conquest
- */
-const isBoston345Conquest = (boat) => {
-    if (!boat || !boat.name) return false;
-    
-    const name = boat.name.toLowerCase();
-    return name.includes('boston whaler') && name.includes('345') && name.includes('conquest');
-};
-
-/**
- * Apply special case bonus for specific boat models known to have high similarity
+ * Calculate a match score between two boats based on features, type, and other criteria
  * @param {Object} boat1 - First boat
  * @param {Object} boat2 - Second boat
- * @param {number} currentScore - Current match score
- * @returns {number} - Potentially boosted score
+ * @returns {number} - Match score from 0-100
  */
-const applySpecialCaseBonus = (boat1, boat2, currentScore) => {
-    // Special case for Boston Whaler 345 Conquest - these models have very high visual similarity
-    if (isBoston345Conquest(boat1) && isBoston345Conquest(boat2)) {
-        console.log('Special case match: Boston Whaler 345 Conquest');
-        // Ensure the score is at least 85% for these models
-        return Math.max(currentScore, 85);
+export const calculateMatchScore = async (boat1, boat2) => {
+    if (!boat1 || !boat2) return 0;
+
+    // Base score from feature comparison
+    const featureScore = calculateFeatureMatchScore(boat1, boat2);
+
+    // Get image-based score if images are available
+    let imageScore = 0;
+    if (boat1.imageUrl && boat2.imageUrl) {
+        try {
+            imageScore = await getImageComparisonScore(boat1.imageUrl, boat2.imageUrl);
+        } catch (error) {
+            console.error('Error getting image comparison score:', error);
+            // Continue with just feature comparison if image analysis fails
+        }
     }
-    
-    // Add other special cases here if needed
-    
-    return currentScore;
+
+    // Weight the scores (can be adjusted based on what proves most accurate)
+    const weightedScore = featureScore * 0.6 + imageScore * 0.4;
+
+    // Return rounded score
+    return Math.round(weightedScore);
 };
 
 /**
- * Calculate match score between two boats
- * @param {Object} currentBoat The current boat
- * @param {Object} targetBoat The target boat to compare with
- * @returns {Promise<number>} A match score from 0-100
+ * Gets a similarity score based on image analysis using GPT-4o
+ * @param {string} imageUrl1 - URL of first boat image
+ * @param {string} imageUrl2 - URL of second boat image
+ * @returns {Promise<number>} - Match score from 0-100
  */
-const calculateMatchScore = async (currentBoat, targetBoat) => {
+const getImageComparisonScore = async (imageUrl1, imageUrl2) => {
     try {
-        if (!currentBoat || !targetBoat) {
-            throw createMatchingError("Missing boat data for comparison", ERROR_TYPES.DATA_INCOMPLETE);
-        }
-
-        console.log(`Calculating match score between ${currentBoat.name || 'Unknown'} and ${targetBoat.name || 'Unknown'}`);
-
-        // Normalize boat data for consistent comparison
-        const normalizedCurrent = normalizeBoatData(currentBoat);
-        const normalizedTarget = normalizeBoatData(targetBoat);
-
-        // Calculate individual component scores
-        const scores = {
-            typeMatch: calculateComponentScore(calculateTypeMatchScore, normalizedCurrent.type, normalizedTarget.type, 'Type'),
-
-            lengthMatch: calculateComponentScore(calculateLengthMatchScore, normalizedCurrent.length, normalizedTarget.length, 'Length'),
-
-            nameMatch: calculateComponentScore(calculateNameMatchScore, normalizedCurrent, normalizedTarget, 'Name'),
-
-            featureMatch: calculateComponentScore(calculateFeatureMatchScore, normalizedCurrent.features, normalizedTarget.features, 'Feature')
-        };
-
-        // Visual matching requires special async handling
-        scores.visualMatch = await calculateVisualScore(normalizedCurrent, normalizedTarget);
-
-        // Calculate final weighted score
-        const finalScore = ((scores.typeMatch * MATCH_WEIGHTS.typeMatch / 100) + (scores.lengthMatch * MATCH_WEIGHTS.lengthMatch / 100) + (scores.visualMatch * MATCH_WEIGHTS.visualMatch / 100) + (scores.nameMatch * MATCH_WEIGHTS.nameMatch / 100) + (scores.featureMatch * MATCH_WEIGHTS.featureMatch / 100));
-
-        // Apply special case bonus if applicable
-        const adjustedScore = applySpecialCaseBonus(currentBoat, targetBoat, finalScore);
-
-        // Log scores for debugging
-        console.log(`Match components for ${normalizedTarget.name || 'Unknown'}:`, {
-            ...scores, finalScore, adjustedScore
-        });
-
-        return Math.round(adjustedScore);
+        // Call the GPT-4o image analysis service
+        const analysisResult = await analyzeBoatImage(imageUrl1, imageUrl2);
+        return analysisResult.similarityScore;
     } catch (error) {
-        // Add more context to the error and rethrow
-        console.error(`Error in calculateMatchScore:`, error);
-        // If it's already a structured error, rethrow it
-        if (error.type) {
-            throw error;
-        }
-        // Otherwise create a structured error
-        throw createMatchingError(`Failed to calculate boat match: ${error.message}`, ERROR_TYPES.GENERAL_ERROR, error);
+        console.error('Error in image comparison:', error);
+        throw error;
     }
+};
+
+/**
+ * Extract features from a boat object
+ * @param {Object} boat - Boat to extract features from
+ * @returns {Set} - Set of normalized features
+ */
+const extractFeaturesFromBoat = (boat) => {
+    const features = new Set();
+
+    if (!boat) return features;
+
+    const normalizeFeature = (feature) => {
+        if (typeof feature !== 'string') return '';
+
+        return feature.toLowerCase()
+            .replace(/[^a-z0-9\s]/g, '')
+            .replace(/\b(for|with|and|the|a|an|to|in|on|of)\b/g, '')
+            .trim();
+    };
+
+    // Collect features from all possible feature sources
+    if (Array.isArray(boat.features)) {
+        boat.features.forEach(f => {
+            const normalized = normalizeFeature(f);
+            if (normalized) features.add(normalized);
+        });
+    }
+
+    if (Array.isArray(boat.keyFeatures)) {
+        boat.keyFeatures.forEach(f => {
+            const normalized = normalizeFeature(f);
+            if (normalized) features.add(normalized);
+        });
+    }
+
+    if (Array.isArray(boat.style)) {
+        boat.style.forEach(s => {
+            const normalized = normalizeFeature(s);
+            if (normalized) features.add(normalized);
+        });
+    }
+
+    return features;
+};
+
+/**
+ * Check if two features are similar
+ * @param {string} feature1 - First feature
+ * @param {string} feature2 - Second feature
+ * @returns {boolean} - True if features are similar
+ */
+const areSimilarFeatures = (feature1, feature2) => {
+    // Exact match
+    if (feature1 === feature2) return true;
+
+    // One contains the other
+    if (feature1.includes(feature2) || feature2.includes(feature1)) return true;
+
+    // Split into words and check for common words
+    const words1 = feature1.split(/\s+/).filter(Boolean);
+    const words2 = feature2.split(/\s+/).filter(Boolean);
+
+    // Empty features shouldn't match
+    if (words1.length === 0 || words2.length === 0) return false;
+
+    // Calculate word overlap
+    const commonWords = words1.filter(word =>
+        words2.some(w2 => w2.includes(word) || word.includes(w2))
+    );
+
+    // Calculate similarity score
+    const similarityScore = commonWords.length / Math.max(words1.length, words2.length);
+
+    // Consider features similar if they share enough words
+    return similarityScore >= 0.5;
 };
 
 /**
  * Constants for matching algorithm
  */
 const MATCH_WEIGHTS = {
-    typeMatch: 40, lengthMatch: 25, visualMatch: 20, nameMatch: 10, featureMatch: 5
+    typeMatch: 40,
+    lengthMatch: 25,
+    visualMatch: 20,
+    nameMatch: 10,
+    featureMatch: 5
 };
 
 /**
@@ -526,19 +575,13 @@ const createMatchingError = (message, type = ERROR_TYPES.GENERAL_ERROR, original
 
 export {
     normalizeBoatData,
-    calculateTypeMatchScore,
     getBoatLength,
     areBoatTypesRelated,
-    calculateVisualMatchScore,
-    calculateMatchScore,
-    calculateNameMatchScore,
-    calculateLengthMatchScore,
     calculateFeatureMatchScore,
-    calculateComponentScore,
-    calculateVisualScore,
-    isBoston345Conquest,
-    applySpecialCaseBonus,
     MATCH_WEIGHTS,
     ERROR_TYPES,
-    createMatchingError
+    createMatchingError,
+    getImageComparisonScore,
+    extractFeaturesFromBoat,
+    areSimilarFeatures
 };

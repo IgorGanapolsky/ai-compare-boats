@@ -1,67 +1,63 @@
-import React from 'react';
+import React, { memo } from 'react';
 import styles from './styles.module.css';
 import { useBoatSize } from '../../hooks/useBoatSize';
 
-const BoatImage = React.memo(({ boat }) => (
+const BoatImage = memo(({ boat }) => (
     <img
         src={boat.imageUrl || '/placeholder-boat.jpg'}
         alt={boat.name || 'Boat'}
         className={styles.boatImage}
-        onError={(e) => e.target.src = '/placeholder-boat.jpg'}
+        onError={(e) => {
+            e.target.src = '/placeholder-boat.jpg';
+        }}
+        loading="lazy"
     />
 ));
+BoatImage.displayName = 'BoatImage';
 
-const MatchRateDisplay = ({ matchRate }) => (
-    <div className={styles.matchRateDisplay}>
+const MatchRateDisplay = memo(({ matchRate }) => (
+    <div className={styles.matchRateDisplay} role="status" aria-label={`Match rate: ${matchRate}%`}>
         <div className={styles.matchCircle} data-match={matchRate >= 75 ? "high" : matchRate >= 50 ? "medium" : "low"}>
             <span>{matchRate}%</span>
             <span className={styles.matchLabel}>Match</span>
         </div>
     </div>
-);
+));
+MatchRateDisplay.displayName = 'MatchRateDisplay';
 
-const BoatDetails = ({ boat, showPrice, showLocation }) => {
+const BoatDetails = memo(({ boat, showPrice, showLocation }) => {
     const { getBoatSize } = useBoatSize();
 
     return (
         <div className={styles.boatDetails}>
-            <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Size:</span>
-                <span className={styles.detailValue}>{getBoatSize(boat)}</span>
-            </div>
-            <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Type:</span>
-                <span className={styles.detailValue}>{boat.type || 'N/A'}</span>
-            </div>
-            <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Engine:</span>
-                <span className={styles.detailValue}>{boat.engine || 'N/A'}</span>
-            </div>
-            <div className={styles.detailItem}>
-                <span className={styles.detailLabel}>Hull:</span>
-                <span className={styles.detailValue}>{boat.hullMaterial || 'N/A'}</span>
-            </div>
+            <DetailItem label="Size" value={getBoatSize(boat)} />
+            <DetailItem label="Type" value={boat.type} />
+            <DetailItem label="Engine" value={boat.engine} />
+            <DetailItem label="Hull" value={boat.hullMaterial} />
             {showPrice && (
-                <div className={styles.detailItem}>
-                    <span className={styles.detailLabel}>Price:</span>
-                    <span className={styles.detailValue}>
-                        {boat.price
-                            ? `$${new Intl.NumberFormat('en-US').format(boat.price)}`
-                            : 'N/A'}
-                    </span>
-                </div>
+                <DetailItem
+                    label="Price"
+                    value={boat.price ? new Intl.NumberFormat('en-US', {
+                        style: 'currency',
+                        currency: 'USD'
+                    }).format(boat.price) : undefined}
+                />
             )}
-            {showLocation && (
-                <div className={styles.detailItem}>
-                    <span className={styles.detailLabel}>Location:</span>
-                    <span className={styles.detailValue}>{boat.location || 'N/A'}</span>
-                </div>
-            )}
+            {showLocation && <DetailItem label="Location" value={boat.location} />}
         </div>
     );
-};
+});
+BoatDetails.displayName = 'BoatDetails';
 
-export const BoatColumn = ({ boat, title, matchRate, showPrice, showLocation }) => (
+const DetailItem = memo(({ label, value }) => (
+    <div className={styles.detailItem}>
+        <span className={styles.detailLabel}>{label}:</span>
+        <span className={styles.detailValue}>{value || 'N/A'}</span>
+    </div>
+));
+DetailItem.displayName = 'DetailItem';
+
+export const BoatColumn = memo(({ boat, title, matchRate, showPrice, showLocation }) => (
     <div className={styles.boatColumn}>
         <div className={styles.boatHeader}>
             <h3>{title}</h3>
@@ -75,4 +71,5 @@ export const BoatColumn = ({ boat, title, matchRate, showPrice, showLocation }) 
             showLocation={showLocation}
         />
     </div>
-); 
+));
+BoatColumn.displayName = 'BoatColumn'; 

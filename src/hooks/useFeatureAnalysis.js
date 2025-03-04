@@ -1,7 +1,64 @@
-import { useMemo } from 'react';
-import { isBoston345Conquest } from '../utils/boatMatching';
+import { useMemo, useCallback } from 'react';
+
+const SIMILARITY_THRESHOLD = 0.5;
 
 export const useFeatureAnalysis = (currentBoat, comparisonBoat) => {
+    const normalizeFeature = useCallback((feature) => {
+        if (typeof feature !== 'string') return '';
+
+        return feature.toLowerCase()
+            .replace(/[^a-z0-9\s]/g, '')
+            .replace(/\b(for|with|and|the|a|an|to|in|on|of)\b/g, '')
+            .trim();
+    }, []);
+
+    const extractFeaturesFromBoat = useCallback((boat) => {
+        const features = new Set();
+
+        if (!boat) return features;
+
+        const featureArrays = [
+            boat.features || [],
+            boat.keyFeatures || [],
+            boat.style || []
+        ];
+
+        featureArrays.forEach(array => {
+            array.forEach(feature => {
+                const normalized = normalizeFeature(feature);
+                if (normalized) features.add(normalized);
+            });
+        });
+
+        return features;
+    }, [normalizeFeature]);
+
+    const areSimilarFeatures = useCallback((feature1, feature2) => {
+        if (feature1 === feature2) return true;
+        if (feature1.includes(feature2) || feature2.includes(feature1)) return true;
+
+        const words1 = feature1.split(/\s+/).filter(Boolean);
+        const words2 = feature2.split(/\s+/).filter(Boolean);
+
+        if (words1.length === 0 || words2.length === 0) return false;
+
+        const commonWords = words1.filter(word =>
+            words2.some(w2 => w2.includes(word) || word.includes(w2))
+        );
+
+        return commonWords.length / Math.max(words1.length, words2.length) >= SIMILARITY_THRESHOLD;
+    }, []);
+
+    const findOriginalText = useCallback((normalizedFeature, boat) => {
+        const allFeatures = [
+            ...(boat.features || []),
+            ...(boat.keyFeatures || []),
+            ...(boat.style || [])
+        ];
+
+        return allFeatures.find(f => normalizeFeature(f) === normalizedFeature) || normalizedFeature;
+    }, [normalizeFeature]);
+
     return useMemo(() => {
         if (!currentBoat || !comparisonBoat) {
             return {
@@ -11,65 +68,6 @@ export const useFeatureAnalysis = (currentBoat, comparisonBoat) => {
                 uniqueToMatch: []
             };
         }
-
-        // Normalize feature text for better matching
-        const normalizeFeature = (feature) => {
-            if (typeof feature !== 'string') return '';
-
-            return feature.toLowerCase()
-                .replace(/[^a-z0-9\s]/g, '')
-                .replace(/\b(for|with|and|the|a|an|to|in|on|of)\b/g, '')
-                .trim();
-        };
-
-        // Extract all features from a boat object
-        const extractFeaturesFromBoat = (boat) => {
-            const features = new Set();
-
-            if (!boat) return features;
-
-            // Collect features from all possible feature sources
-            if (Array.isArray(boat.features)) {
-                boat.features.forEach(f => {
-                    const normalized = normalizeFeature(f);
-                    if (normalized) features.add(normalized);
-                });
-            }
-
-            if (Array.isArray(boat.keyFeatures)) {
-                boat.keyFeatures.forEach(f => {
-                    const normalized = normalizeFeature(f);
-                    if (normalized) features.add(normalized);
-                });
-            }
-
-            if (Array.isArray(boat.style)) {
-                boat.style.forEach(s => {
-                    const normalized = normalizeFeature(s);
-                    if (normalized) features.add(normalized);
-                });
-            }
-
-            return features;
-        };
-
-        // Check if two features are similar
-        const areSimilarFeatures = (feature1, feature2) => {
-            if (feature1 === feature2) return true;
-            if (feature1.includes(feature2) || feature2.includes(feature1)) return true;
-
-            const words1 = feature1.split(/\s+/).filter(Boolean);
-            const words2 = feature2.split(/\s+/).filter(Boolean);
-
-            if (words1.length === 0 || words2.length === 0) return false;
-
-            const commonWords = words1.filter(word =>
-                words2.some(w2 => w2.includes(word) || word.includes(w2))
-            );
-
-            const similarityScore = commonWords.length / Math.max(words1.length, words2.length);
-            return similarityScore >= 0.5;
-        };
 
         const currentFeatures = extractFeaturesFromBoat(currentBoat);
         const comparisonFeatures = extractFeaturesFromBoat(comparisonBoat);
@@ -91,20 +89,7 @@ export const useFeatureAnalysis = (currentBoat, comparisonBoat) => {
             ? Math.round((commonFeatures.length / totalFeatures) * 100)
             : 0;
 
-        let matchRate = featureMatchRate;
-        if (isBoston345Conquest(currentBoat) && isBoston345Conquest(comparisonBoat)) {
-            matchRate = Math.max(matchRate, 85);
-        }
-
-        const findOriginalText = (normalizedFeature, boat) => {
-            const allFeatures = [
-                ...(Array.isArray(boat.features) ? boat.features : []),
-                ...(Array.isArray(boat.keyFeatures) ? boat.keyFeatures : []),
-                ...(Array.isArray(boat.style) ? boat.style : [])
-            ];
-
-            return allFeatures.find(f => normalizeFeature(f) === normalizedFeature) || normalizedFeature;
-        };
+        const matchRate = featureMatchRate;
 
         return {
             matchRate,
@@ -112,5 +97,11 @@ export const useFeatureAnalysis = (currentBoat, comparisonBoat) => {
             uniqueToUploaded: uniqueToUploaded.map(f => findOriginalText(f, currentBoat)),
             uniqueToMatch: uniqueToMatch.map(f => findOriginalText(f, comparisonBoat))
         };
-    }, [currentBoat, comparisonBoat]);
+    }, [
+        currentBoat,
+        comparisonBoat,
+        extractFeaturesFromBoat,
+        areSimilarFeatures,
+        findOriginalText
+    ]);
 }; 
