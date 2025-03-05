@@ -32,31 +32,31 @@ const createOpenAIError = (message, type = OPENAI_ERROR_TYPES.UNKNOWN_ERROR, ori
 const getErrorType = (error) => {
   const message = error?.message?.toLowerCase() || '';
   const status = error?.response?.status;
-  
+
   if (message.includes('rate limit') || status === 429) {
     return OPENAI_ERROR_TYPES.RATE_LIMIT_ERROR;
   }
-  
+
   if (message.includes('timeout') || message.includes('timed out')) {
     return OPENAI_ERROR_TYPES.TIMEOUT_ERROR;
   }
-  
+
   if (message.includes('api key') || message.includes('authentication') || status === 401) {
     return OPENAI_ERROR_TYPES.AUTH_ERROR;
   }
-  
+
   if (status >= 400 && status < 500) {
     return OPENAI_ERROR_TYPES.INVALID_REQUEST;
   }
-  
+
   if (status >= 500) {
     return OPENAI_ERROR_TYPES.SERVER_ERROR;
   }
-  
+
   if (message.includes('network') || message.includes('connection') || message.includes('fetch')) {
     return OPENAI_ERROR_TYPES.CONNECTION_ERROR;
   }
-  
+
   return OPENAI_ERROR_TYPES.UNKNOWN_ERROR;
 };
 
@@ -76,19 +76,19 @@ if (!process.env.REACT_APP_OPENAI_API_KEY) {
 // Helper function to implement retry logic with exponential backoff
 const callWithRetry = async (apiFunction, maxRetries = MAX_RETRIES) => {
   let lastError;
-  
+
   for (let attempt = 0; attempt < maxRetries; attempt++) {
     try {
       return await apiFunction();
     } catch (error) {
       lastError = error;
       console.warn(`API attempt ${attempt + 1}/${maxRetries} failed:`, error.message);
-      
+
       // Don't retry if it's an authorization error
       if (error.status === 401 || error.status === 403) {
         throw new Error('API authorization failed. Check your API key.');
       }
-      
+
       // Don't retry if the model is overloaded - just wait longer
       if (error.status === 429 || error.message.includes('overloaded')) {
         console.log('OpenAI API is overloaded, waiting longer before retry');
@@ -99,19 +99,31 @@ const callWithRetry = async (apiFunction, maxRetries = MAX_RETRIES) => {
       }
     }
   }
-  
+
   throw createOpenAIError(`API failed after ${maxRetries} attempts: ${lastError.message}`, getErrorType(lastError), lastError);
 };
 
 export const analyzeBoatImage = async (file, onProgress) => {
   try {
-    onProgress?.('Starting analysis process...');
-    
+    // Make sure onProgress is a function, or use a no-op function if it's not
+    const progressCallback = typeof onProgress === 'function' ? onProgress : () => { };
+
+    // Safely call progress updates
+    const safeProgress = (message) => {
+      try {
+        progressCallback(message);
+      } catch (e) {
+        console.warn('Progress callback error:', e);
+      }
+    };
+
+    safeProgress('Starting analysis process...');
+
     // Validate API key
     if (!process.env.REACT_APP_OPENAI_API_KEY) {
       throw createOpenAIError('Missing API key - using fallback mode', OPENAI_ERROR_TYPES.AUTH_ERROR);
     }
-    
+
     // Convert file to base64
     const base64Image = await new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -120,7 +132,7 @@ export const analyzeBoatImage = async (file, onProgress) => {
       reader.readAsDataURL(file);
     });
 
-    onProgress?.('Preparing image for analysis...');
+    safeProgress('Preparing image for analysis...');
     console.log('Image prepared for OpenAI API');
 
     const prompt = `Analyze this boat image and provide a detailed classification. You MUST be specific about hull material and engine configuration.
@@ -176,9 +188,9 @@ Look carefully at the transom, hull sides, and overall construction to determine
       }
     ];
 
-    onProgress?.('Sending image to AI for analysis...');
+    safeProgress('Sending image to AI for analysis...');
     console.log('Sending request to OpenAI');
-    
+
     // Use the retry function for the API call
     const response = await callWithRetry(() => openai.chat.completions.create({
       model: "gpt-4o",
@@ -216,6 +228,7 @@ Look carefully at the transom, hull sides, and overall construction to determine
     };
 
     console.log('Parsed results:', results);
+    safeProgress(100);
     return results;
   } catch (error) {
     console.error('Error analyzing image:', error);
@@ -230,7 +243,7 @@ function extractStyleTags(analysis) {
 
   // Extract style-related keywords with more patterns
   const styleWords = styleSection.match(/(?:fishing|recreational|sport|luxury|performance|offshore|inshore|bass|family|commercial|professional|utility|modern|traditional|classic|contemporary|versatile|practical)\b/gi);
-  
+
   if (!styleWords) return [];
 
   return [...new Set(styleWords)]

@@ -1,4 +1,7 @@
-// Boat matching utilities
+/**
+ * Utility functions for boat matching and comparison
+ * Using GPT-4o as the single source of truth for match scores
+ */
 
 import { analyzeBoatImage } from '../services/imageAnalysisService';
 
@@ -64,7 +67,6 @@ const normalizeBoatData = (boat) => {
  * @returns {boolean} - Whether the types are related
  */
 const areBoatTypesRelated = (type1, type2) => {
-    // Handle null/undefined values
     if (!type1 || !type2) return false;
 
     // Normalize - ensure we're working with strings
@@ -92,7 +94,6 @@ const areBoatTypesRelated = (type1, type2) => {
  * @returns {number} - Match score between 0-1
  */
 const calculateTypeMatchScore = (type1, type2) => {
-    // Handle null/undefined values
     if (!type1 || !type2) return 0;
 
     // Normalize types by converting to lowercase and removing extra spaces
@@ -272,279 +273,277 @@ const calculateNameMatchScore = (boat1, boat2) => {
 };
 
 /**
- * Calculate visual similarity between two boat images using OpenAI Vision API
- *
- * @param {Object} boat1 - First boat with image
- * @param {Object} boat2 - Second boat with image
- * @returns {Promise<number>} - Similarity score (0-1)
+ * CORE BOAT MATCHING ALGORITHM
+ * Calculate a match score between two boats
+ * @param {Object} sourceBoat - The source boat to compare from
+ * @param {Object} targetBoat - The target boat to compare to
+ * @returns {Promise<number>} - Match percentage between the boats
  */
-const calculateVisualMatchScore = async (boat1, boat2) => {
+export const calculateMatchScore = async (sourceBoat, targetBoat) => {
+    // Validate inputs
+    if (!sourceBoat || !targetBoat) {
+        console.warn('Missing boat data for comparison');
+        return 50; // Default when missing data
+    }
+
     try {
-        // For identical boats or boats with the same image URL, return perfect match
-        if (boat1.id === boat2.id || boat1.imageUrl === boat2.imageUrl) {
-            return 1;
+        console.log(`Comparing boats: "${sourceBoat?.name || 'Unknown'}" vs "${targetBoat?.name || 'Unknown'}"`);
+
+        // 1. IDENTICAL BOAT CHECK - Fast path for same boat
+        if (boatsAreIdentical(sourceBoat, targetBoat)) {
+            console.log('✓ IDENTICAL BOATS - 100% match');
+            return 100;
         }
 
-        // Check if we have URLs for both boats
-        if (!boat1.imageUrl || !boat2.imageUrl) {
-            throw createMatchingError("Missing image data for visual comparison", ERROR_TYPES.DATA_INCOMPLETE);
-        }
-
-        try {
-            // Import OpenAI from the service
-            const { compareBoatImages } = await import('../services/openaiService');
-
-            // Call the OpenAI service to compare images
-            console.log(`Comparing images between ${boat1.name || 'Unknown'} and ${boat2.name || 'Unknown'}`);
-            const score = await compareBoatImages(boat1.imageUrl, boat2.imageUrl);
-            return score / 100;
-        } catch (apiError) {
-            console.error('Error using OpenAI for visual matching:', apiError);
-
-            // Structure the error better based on the type
-            if (apiError.message && apiError.message.includes('rate limit')) {
-                throw createMatchingError("OpenAI API rate limit exceeded", ERROR_TYPES.API_RATE_LIMIT, apiError);
-            } else if (apiError.message && apiError.message.includes('API key')) {
-                throw createMatchingError("Invalid or missing API key", ERROR_TYPES.API_TOKEN_INVALID, apiError);
-            }
-
-            // Fallback to simple heuristics if API is unavailable
-            console.log('Falling back to basic visual matching');
-
-            // Calculate basic type and length similarity as fallbacks
-            let typeScore = 0;
-            let lengthScore = 0;
-
+        // 2. IMAGE ANALYSIS - Primary scoring method using GPT-4o
+        if (sourceBoat?.imageUrl && targetBoat?.imageUrl) {
             try {
-                if (boat1.type === boat2.type) {
-                    typeScore = 0.7;
-                } else if (areBoatTypesRelated(boat1.type, boat2.type)) {
-                    typeScore = 0.5;
-                } else {
-                    typeScore = 0.3;
+                // Call the image analysis service with additional logging
+                console.log('Calling image analysis service for detailed comparison...');
+                const imageAnalysis = await analyzeBoatImage(sourceBoat.imageUrl, targetBoat.imageUrl);
+
+                if (imageAnalysis && typeof imageAnalysis.similarityScore === 'number') {
+                    const score = Math.round(imageAnalysis.similarityScore);
+                    console.log(`✓ IMAGE ANALYSIS SCORE: ${score}% (source: ${imageAnalysis.source || 'unknown'})`);
+
+                    // If same image URLs are detected, ensure 100% match
+                    if (imageAnalysis.source === 'identical_images' && score !== 100) {
+                        console.log('Identical images detected but score was not 100%, correcting to 100%');
+                        return 100;
+                    }
+
+                    return score;
                 }
-            } catch (error) {
-                console.warn('Error calculating type similarity for fallback:', error);
-                typeScore = 0.4; // Conservative default
+            } catch (analysisError) {
+                console.error('Error during image analysis:', analysisError);
+                // Continue to fallback methods
             }
-
-            try {
-                if (boat1.length && boat2.length) {
-                    const lengthDiff = Math.abs(boat1.length - boat2.length);
-                    const maxLength = Math.max(boat1.length, boat2.length);
-                    const diffPercentage = lengthDiff / maxLength;
-
-                    if (diffPercentage <= 0.05) lengthScore = 0.8;      // Within 5%
-                    else if (diffPercentage <= 0.1) lengthScore = 0.7;  // Within 10%
-                    else if (diffPercentage <= 0.2) lengthScore = 0.5;  // Within 20%
-                    else if (diffPercentage <= 0.3) lengthScore = 0.3;  // Within 30%
-                    else lengthScore = 0.2;                            // Different sizes
-                } else {
-                    lengthScore = 0.3; // No length info, use conservative value
-                }
-            } catch (error) {
-                console.warn('Error calculating length similarity for fallback:', error);
-                lengthScore = 0.3; // Conservative default
-            }
-
-            // A basic visual score that's slightly conservative (40-70 range)
-            const fallbackVisualScore = 0.4 + ((typeScore + lengthScore) / 2) * 0.3;
-
-            console.log(`Using fallback visual score: ${Math.round(fallbackVisualScore * 100) / 100}`);
-            return fallbackVisualScore;
+        } else {
+            console.log('⚠️ Missing image URLs, using text-based comparison');
         }
+
+        // 3. FALLBACK - Use metadata comparison when image analysis fails
+        return calculateTextBasedMatchScore(sourceBoat, targetBoat);
+
     } catch (error) {
-        console.error('Error in visual matching:', error);
-        // If it's already a structured error, rethrow it
-        if (error.type) {
-            throw error;
-        }
-        // Otherwise create a structured error
-        throw createMatchingError(`Visual comparison failed: ${error.message}`, ERROR_TYPES.GENERAL_ERROR, error);
+        console.error('Error in boat matching:', error);
+        return 45; // Conservative fallback
     }
 };
 
 /**
- * Calculate a single component score with error handling
- * @param {Function} calculationFn - The scoring function to use
- * @param {any} param1 - First parameter to pass to the calculation function
- * @param {any} param2 - Second parameter to pass to the calculation function
- * @param {string} componentName - Name of the component for logging
- * @param {number} fallbackScore - Score to use if calculation fails
- * @returns {number} - The calculated score or fallback value
- */
-const calculateComponentScore = (calculationFn, param1, param2, componentName, fallbackScore = 50) => {
-    try {
-        const score = calculationFn(param1, param2);
-        // Convert 0-1 scale to 0-100 scale if needed
-        return (score <= 1 && score >= 0) ? score * 100 : score;
-    } catch (error) {
-        console.warn(`${componentName} matching error: ${error.message}`);
-        return fallbackScore;
-    }
-};
-
-/**
- * Calculate visual match score with special error handling
+ * Check if two boats are identical based on ID, name, or image
  * @param {Object} boat1 - First boat
  * @param {Object} boat2 - Second boat
- * @returns {Promise<number>} - Visual match score or fallback value
+ * @returns {boolean} - Whether the boats are identical
  */
-const calculateVisualScore = async (boat1, boat2) => {
-    // Skip visual match if images are missing
-    if (!boat1.image || !boat2.image) {
-        console.log('Skipping visual match - one or both boats missing images');
-        return 50;
+const boatsAreIdentical = (boat1, boat2) => {
+    // Same object reference
+    if (boat1 === boat2) return true;
+
+    // Check IDs if available
+    if (boat1?.id && boat2?.id && boat1.id === boat2.id) {
+        return true;
     }
 
-    try {
-        const score = await calculateVisualMatchScore(boat1, boat2) * 100;
-        console.log(`Visual match score: ${score}`);
-        return score;
-    } catch (error) {
-        // For API key errors, these are critical so rethrow
-        if (error.type === ERROR_TYPES.API_TOKEN_INVALID) {
-            throw createMatchingError("Invalid or missing API key for image matching.", ERROR_TYPES.API_TOKEN_INVALID, error);
+    // Check image URLs if exact match
+    if (boat1?.imageUrl && boat2?.imageUrl) {
+        const url1 = boat1.imageUrl.toLowerCase();
+        const url2 = boat2.imageUrl.toLowerCase();
+
+        // Exact URL match
+        if (url1 === url2) {
+            console.log('Identical image URLs detected - 100% match');
+            return true;
         }
 
-        // For other errors, use fallback score
-        console.warn(`Visual matching error: ${error.message}`);
-        return 40; // Slightly below average as a conservative estimate
-    }
-};
+        // Strip query params for comparison
+        const baseUrl1 = url1.split('?')[0].split('#')[0];
+        const baseUrl2 = url2.split('?')[0].split('#')[0];
 
-/**
- * Calculate a match score between two boats based on features, type, and other criteria
- * @param {Object} boat1 - First boat
- * @param {Object} boat2 - Second boat
- * @returns {number} - Match score from 0-100
- */
-export const calculateMatchScore = async (boat1, boat2) => {
-    if (!boat1 || !boat2) return 0;
-
-    // Base score from feature comparison
-    const featureScore = calculateFeatureMatchScore(boat1, boat2);
-
-    // Get image-based score if images are available
-    let imageScore = 0;
-    if (boat1.imageUrl && boat2.imageUrl) {
-        try {
-            imageScore = await getImageComparisonScore(boat1.imageUrl, boat2.imageUrl);
-        } catch (error) {
-            console.error('Error getting image comparison score:', error);
-            // Continue with just feature comparison if image analysis fails
+        if (baseUrl1 === baseUrl2 && baseUrl1 !== '') {
+            console.log('Identical base image URLs detected - 100% match');
+            return true;
         }
     }
 
-    // Weight the scores (can be adjusted based on what proves most accurate)
-    const weightedScore = featureScore * 0.6 + imageScore * 0.4;
+    // Check for identical name with decent length (not generic)
+    const isNameMeaningful = (name) => {
+        if (!name || typeof name !== 'string') return false;
+        if (name.length < 5) return false;
 
-    // Return rounded score
-    return Math.round(weightedScore);
-};
-
-/**
- * Gets a similarity score based on image analysis using GPT-4o
- * @param {string} imageUrl1 - URL of first boat image
- * @param {string} imageUrl2 - URL of second boat image
- * @returns {Promise<number>} - Match score from 0-100
- */
-const getImageComparisonScore = async (imageUrl1, imageUrl2) => {
-    try {
-        // Call the GPT-4o image analysis service
-        const analysisResult = await analyzeBoatImage(imageUrl1, imageUrl2);
-        return analysisResult.similarityScore;
-    } catch (error) {
-        console.error('Error in image comparison:', error);
-        throw error;
-    }
-};
-
-/**
- * Extract features from a boat object
- * @param {Object} boat - Boat to extract features from
- * @returns {Set} - Set of normalized features
- */
-const extractFeaturesFromBoat = (boat) => {
-    const features = new Set();
-
-    if (!boat) return features;
-
-    const normalizeFeature = (feature) => {
-        if (typeof feature !== 'string') return '';
-
-        return feature.toLowerCase()
-            .replace(/[^a-z0-9\s]/g, '')
-            .replace(/\b(for|with|and|the|a|an|to|in|on|of)\b/g, '')
-            .trim();
+        const genericNames = ['boat', 'vessel', 'ship', 'yacht', 'watercraft', 'unknown'];
+        return !genericNames.includes(name.toLowerCase());
     };
 
-    // Collect features from all possible feature sources
-    if (Array.isArray(boat.features)) {
-        boat.features.forEach(f => {
-            const normalized = normalizeFeature(f);
-            if (normalized) features.add(normalized);
-        });
+    if (boat1?.name && boat2?.name &&
+        boat1.name === boat2.name &&
+        isNameMeaningful(boat1.name)) {
+        return true;
     }
 
-    if (Array.isArray(boat.keyFeatures)) {
-        boat.keyFeatures.forEach(f => {
-            const normalized = normalizeFeature(f);
-            if (normalized) features.add(normalized);
-        });
-    }
-
-    if (Array.isArray(boat.style)) {
-        boat.style.forEach(s => {
-            const normalized = normalizeFeature(s);
-            if (normalized) features.add(normalized);
-        });
-    }
-
-    return features;
+    return false;
 };
 
 /**
- * Check if two features are similar
- * @param {string} feature1 - First feature
- * @param {string} feature2 - Second feature
- * @returns {boolean} - True if features are similar
+ * Calculate a match score based on text metadata when images aren't available
+ * @param {Object} boat1 - First boat
+ * @param {Object} boat2 - Second boat
+ * @returns {number} - Match percentage (0-100)
  */
-const areSimilarFeatures = (feature1, feature2) => {
-    // Exact match
-    if (feature1 === feature2) return true;
+const calculateTextBasedMatchScore = (boat1, boat2) => {
+    console.log('Using text-based matching algorithm');
 
-    // One contains the other
-    if (feature1.includes(feature2) || feature2.includes(feature1)) return true;
+    // Initialize component scores
+    let typeScore = 0;
+    let lengthScore = 0;
+    let nameScore = 0;
+    let featureScore = 0;
 
-    // Split into words and check for common words
-    const words1 = feature1.split(/\s+/).filter(Boolean);
-    const words2 = feature2.split(/\s+/).filter(Boolean);
+    // Track which components we could calculate
+    const componentWeights = {
+        type: 0,
+        length: 0,
+        name: 0,
+        features: 0
+    };
 
-    // Empty features shouldn't match
-    if (words1.length === 0 || words2.length === 0) return false;
+    // 1. Type comparison (highest weight)
+    if (boat1?.type && boat2?.type) {
+        typeScore = calculateTypeMatchScore(boat1.type, boat2.type);
+        componentWeights.type = 0.4; // 40% weight
+        console.log(`Type match: ${Math.round(typeScore * 100)}%`);
+    }
 
-    // Calculate word overlap
-    const commonWords = words1.filter(word =>
-        words2.some(w2 => w2.includes(word) || word.includes(w2))
-    );
+    // 2. Length comparison
+    const length1 = parseFloat(boat1?.length || 0);
+    const length2 = parseFloat(boat2?.length || 0);
 
-    // Calculate similarity score
-    const similarityScore = commonWords.length / Math.max(words1.length, words2.length);
+    if (length1 > 0 && length2 > 0) {
+        lengthScore = calculateLengthMatchScore(length1, length2);
+        componentWeights.length = 0.3; // 30% weight
+        console.log(`Length match: ${Math.round(lengthScore * 100)}%`);
+    }
 
-    // Consider features similar if they share enough words
-    return similarityScore >= 0.5;
+    // 3. Name comparison
+    if (boat1?.name && boat2?.name) {
+        nameScore = calculateNameMatchScore(boat1, boat2);
+        componentWeights.name = 0.2; // 20% weight
+        console.log(`Name match: ${Math.round(nameScore * 100)}%`);
+    }
+
+    // 4. Feature comparison
+    if ((boat1?.features && boat1.features.length > 0) ||
+        (boat2?.features && boat2.features.length > 0)) {
+        featureScore = calculateFeatureMatchScore(boat1, boat2) / 100; // Convert to 0-1 range
+        componentWeights.features = 0.1; // 10% weight
+        console.log(`Feature match: ${Math.round(featureScore * 100)}%`);
+    }
+
+    // Calculate weighted average
+    const totalWeight = Object.values(componentWeights).reduce((sum, weight) => sum + weight, 0);
+
+    if (totalWeight === 0) {
+        console.warn('No comparable attributes found between boats');
+        return 50; // Default when no comparison possible
+    }
+
+    const weightedSum =
+        (typeScore * componentWeights.type) +
+        (lengthScore * componentWeights.length) +
+        (nameScore * componentWeights.name) +
+        (featureScore * componentWeights.features);
+
+    const finalScore = Math.round((weightedSum / totalWeight) * 100);
+    console.log(`Final text-based match score: ${finalScore}%`);
+
+    return finalScore;
+};
+
+/**
+ * Extract relevant features from a boat object
+ * @param {Object} boat - Boat object
+ * @returns {Array} - Array of features
+ */
+export const extractFeaturesFromBoat = (boat) => {
+    if (!boat) return [];
+
+    try {
+        // Extract features array
+        let features = [];
+
+        if (Array.isArray(boat.features)) {
+            features = [...boat.features];
+        } else if (boat.features) {
+            features = [boat.features];
+        }
+
+        // Add additional properties as features if they exist
+        const additionalFeatures = [];
+
+        if (boat.engine) additionalFeatures.push(`Engine: ${boat.engine}`);
+        if (boat.hullMaterial) additionalFeatures.push(`Hull: ${boat.hullMaterial}`);
+        if (boat.fuelType) additionalFeatures.push(`Fuel: ${boat.fuelType}`);
+        if (boat.propulsionType) additionalFeatures.push(`Propulsion: ${boat.propulsionType}`);
+
+        return [...features, ...additionalFeatures].filter(Boolean);
+    } catch (error) {
+        console.warn('Error extracting features:', error);
+        return [];
+    }
+};
+
+/**
+ * Determine if two sets of features are similar
+ * @param {Object} feature1 - First feature string
+ * @param {Object} feature2 - Second feature string
+ * @returns {boolean} - Whether features are similar
+ */
+export const areSimilarFeatures = (feature1, feature2) => {
+    if (!feature1 || !feature2) return false;
+
+    try {
+        // Convert to strings and normalize
+        const f1 = String(feature1).toLowerCase().trim();
+        const f2 = String(feature2).toLowerCase().trim();
+
+        // Exact match
+        if (f1 === f2) return true;
+
+        // One contains the other
+        if (f1.includes(f2) || f2.includes(f1)) return true;
+
+        // Calculate word similarity
+        const words1 = f1.split(/\s+/);
+        const words2 = f2.split(/\s+/);
+
+        if (words1.length && words2.length) {
+            // Count common words
+            const commonWords = words1.filter(word =>
+                word.length > 3 && words2.includes(word)
+            );
+
+            // More than 50% words in common
+            if (commonWords.length >= Math.min(words1.length, words2.length) * 0.5) {
+                return true;
+            }
+        }
+
+        return false;
+    } catch (error) {
+        console.warn('Error comparing features:', error);
+        return false;
+    }
 };
 
 /**
  * Constants for matching algorithm
  */
 const MATCH_WEIGHTS = {
-    typeMatch: 40,
-    lengthMatch: 25,
-    visualMatch: 20,
-    nameMatch: 10,
-    featureMatch: 5
+    type: 0.4,    // 40%
+    length: 0.3,  // 30%
+    name: 0.2,    // 20%
+    features: 0.1 // 10%
 };
 
 /**
@@ -559,29 +558,12 @@ const ERROR_TYPES = {
     GENERAL_ERROR: 'general_error'
 };
 
-/**
- * Helper to create a structured error with type
- * @param {string} message Error message
- * @param {string} type Error type from ERROR_TYPES
- * @param {*} originalError Original error if available
- * @returns {Error} Enhanced error object
- */
-const createMatchingError = (message, type = ERROR_TYPES.GENERAL_ERROR, originalError = null) => {
-    const error = new Error(message);
-    error.type = type;
-    error.originalError = originalError;
-    return error;
-};
-
+// Export additional utilities that may be used elsewhere
 export {
     normalizeBoatData,
     getBoatLength,
     areBoatTypesRelated,
     calculateFeatureMatchScore,
     MATCH_WEIGHTS,
-    ERROR_TYPES,
-    createMatchingError,
-    getImageComparisonScore,
-    extractFeaturesFromBoat,
-    areSimilarFeatures
+    ERROR_TYPES
 };
