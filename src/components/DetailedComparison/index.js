@@ -157,15 +157,10 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
     if (!boat) return {};
 
     // Extract and format all available feature categories
+    // Removed technical specs to avoid duplication with Specifications section
     return {
       keyFeatures: Array.isArray(boat.keyFeatures) ? boat.keyFeatures : [],
-      amenities: Array.isArray(boat.amenities) ? boat.amenities : [],
-      technicalSpecs: [
-        boat.engine && `Engine: ${boat.engine}`,
-        boat.hullMaterial && `Hull: ${boat.hullMaterial}`,
-        boat.fuelType && `Fuel: ${boat.fuelType}`,
-        boat.propulsion && `Propulsion: ${boat.propulsion}`
-      ].filter(Boolean)
+      amenities: Array.isArray(boat.amenities) ? boat.amenities : []
     };
   };
 
@@ -401,10 +396,7 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
                     features={userBoatFeatures.amenities}
                   />
 
-                  <FeatureSection
-                    title="Technical Specs"
-                    features={userBoatFeatures.technicalSpecs}
-                  />
+                  {/* Removed Technical Specs section to avoid duplication with Specifications */}
                 </div>
 
                 <FeatureComparison
