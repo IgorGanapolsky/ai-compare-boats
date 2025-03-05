@@ -60,11 +60,11 @@ const BoatDetails = memo(({ boat, showPrice, showLocation }) => {
 });
 BoatDetails.displayName = 'BoatDetails';
 
-export const BoatColumn = memo(({ boat, title, matchRate, showPrice, showLocation }) => (
+export const BoatColumn = memo(({ boat, title, matchRate, showPrice, showLocation, hideMatchRate = false }) => (
     <div className={styles.boatColumn}>
         <div className={styles.boatHeader}>
             <h3>{title}</h3>
-            {matchRate && <MatchRateDisplay matchRate={matchRate} />}
+            {matchRate && !hideMatchRate && <MatchRateDisplay matchRate={matchRate} />}
             <BoatImage boat={boat} />
             <h4>{boat.name || 'Your boat'}</h4>
         </div>

@@ -2,7 +2,6 @@ import React, { Suspense, memo, useMemo, useState, useEffect } from 'react';
 import styles from './styles.module.css';
 import { useFeatureAnalysis } from '../../hooks/useFeatureAnalysis';
 import { ComparisonHeader } from './ComparisonHeader';
-import { BoatColumn } from './BoatColumn';
 import { FeatureComparison } from './FeatureComparison';
 import { ErrorBoundary } from '../ErrorBoundary';
 import FeatureSection from './FeatureSection';
@@ -34,6 +33,23 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
     };
   }, []);
 
+  // Add Escape key handler to dismiss popup
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    // Add event listener for escape key
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup when component unmounts
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [onClose]);
+
   // Calculate match score using the same method as the Similar Boats list
   useEffect(() => {
     const calculateScore = async () => {
@@ -51,6 +67,40 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
     
     calculateScore();
   }, [currentBoat, comparisonBoat]);
+
+  // Helper function to determine match level (high, medium, low)
+  const getMatchLevel = (score) => {
+    if (score >= 80) return "high";
+    if (score >= 60) return "medium";
+    return "low";
+  };
+
+  // Helper function to format price values
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      maximumFractionDigits: 0
+    }).format(price);
+  };
+
+  // Helper function to render specification items
+  const renderSpecificationItem = (label, value, unit = '') => {
+    return (
+      <div key={label} className={styles.specificationItem}>
+        <span className={styles.specificationLabel}>{label}</span>
+        <span className={styles.specificationValue}>
+          {value}{unit && value ? ' ' + unit : ''}
+        </span>
+      </div>
+    );
+  };
+
+  // Helper function to get boat size
+  const getBoatSize = (boat) => {
+    if (!boat) return '';
+    return boat.length || boat.size || '';
+  };
 
   // Calculate feature comparison with error handling
   const featureAnalysis = useMemo(() => {
@@ -141,20 +191,70 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
             ) : (
               <>
                 <div className={styles.comparisonContainer}>
-                  <BoatColumn
-                    boat={currentBoat}
-                    title="Your Boat"
-                    showPrice={false}
-                    showLocation={false}
-                  />
+                  <div className={styles.boatsRow}>
+                    {/* Left column - Your Boat */}
+                    <div className={styles.boatComparisonColumn}>
+                      <div className={styles.boatTitle}>Your Reference Boat</div>
+                      <div className={styles.boatImageContainer}>
+                        <img 
+                          src={currentBoat.imageUrl || '/placeholder-boat.jpg'} 
+                          alt={currentBoat.name || 'Your boat'} 
+                          className={styles.boatImage}
+                          onError={(e) => { e.target.src = '/placeholder-boat.jpg'; }}
+                        />
+                      </div>
+                      <div className={styles.boatName}>{currentBoat.name || 'Your boat'}</div>
+                    </div>
+                  
+                    {/* Center - Match circle */}
+                    <div className={styles.matchCircleContainer}>
+                      <div className={styles.matchCircleWrapper}>
+                        <div className={styles.matchCircle} data-match={getMatchLevel(matchScore || featureAnalysis.matchRate)}>
+                          <span className={styles.matchNumber}>{matchScore !== null ? matchScore : featureAnalysis.matchRate}%</span>
+                        </div>
+                        <div className={styles.matchLabel}>Match</div>
+                      </div>
+                    </div>
 
-                  <BoatColumn
-                    boat={comparisonBoat}
-                    title="Match"
-                    matchRate={matchScore !== null ? matchScore : featureAnalysis.matchRate}
-                    showPrice={true}
-                    showLocation={true}
-                  />
+                    {/* Right column - Comparison Boat */}
+                    <div className={styles.boatComparisonColumn}>
+                      <div className={styles.boatTitle}>{comparisonBoat?.name || "Match"}</div>
+                      <div className={styles.boatImageContainer}>
+                        <img 
+                          src={comparisonBoat.imageUrl || '/placeholder-boat.jpg'} 
+                          alt={comparisonBoat.name || 'Comparison boat'} 
+                          className={styles.boatImage}
+                          onError={(e) => { e.target.src = '/placeholder-boat.jpg'; }}
+                        />
+                      </div>
+                      <div className={styles.boatName}>{comparisonBoat.name || 'Comparison boat'}</div>
+                    </div>
+                  </div>
+                  
+                  {/* Specifications Section - Two columns */}
+                  <div className={styles.specificationsContainer}>
+                    <div className={styles.specificationColumn}>
+                      <div className={styles.specificationTitle}>Specifications</div>
+                      <div className={styles.specificationGrid}>
+                        {renderSpecificationItem("Size", getBoatSize(currentBoat), "ft")}
+                        {renderSpecificationItem("Type", currentBoat.type || "—")}
+                        {renderSpecificationItem("Engine", currentBoat.engine || "—")}
+                        {renderSpecificationItem("Hull", currentBoat.hullMaterial || "—")}
+                      </div>
+                    </div>
+                    
+                    <div className={styles.specificationColumn}>
+                      <div className={styles.specificationTitle}>Specifications</div>
+                      <div className={styles.specificationGrid}>
+                        {renderSpecificationItem("Size", getBoatSize(comparisonBoat), "ft")}
+                        {renderSpecificationItem("Type", comparisonBoat.type || "—")}
+                        {renderSpecificationItem("Engine", comparisonBoat.engine || "—")}
+                        {renderSpecificationItem("Hull", comparisonBoat.hullMaterial || "—")}
+                        {renderSpecificationItem("Price", comparisonBoat.price ? formatPrice(comparisonBoat.price) : "—")}
+                        {renderSpecificationItem("Location", comparisonBoat.location || "—")}
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 <div className={styles.featuresContainer}>

@@ -18,7 +18,7 @@
   border-radius: 10px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.25);
   width: 100%;
-  max-width: 1200px;
+  max-width: 90%; /* Expanded width */
   max-height: 90vh;
   overflow-y: auto;
   position: relative;
@@ -64,7 +64,8 @@
 
 .comparisonContainer {
   width: 100%;
-  max-width: 1200px;
+  display: flex;
+  flex-direction: column;
   margin: 0 auto;
   padding: 20px;
 }
@@ -87,6 +88,9 @@
   border-radius: 12px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
   overflow: hidden;
+  width: 100%;
+  height: 100%;
+  margin: 0 auto;
 }
 
 .boatColumn {
@@ -96,7 +100,10 @@
 
 .boatHeader {
   text-align: center;
-  margin-bottom: 15px;
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
 }
 
 .boatHeader h3 {
@@ -113,9 +120,12 @@
 
 .boatImage {
   width: 100%;
-  height: 180px;
-  object-fit: cover;
+  height: 200px;
+  object-fit: contain;
   border-radius: 8px;
+  margin-top: 10px;
+  margin-bottom: 10px;
+  background-color: #f8f8f8;
 }
 
 .matchRateDisplay {
@@ -129,12 +139,13 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  width: 65px;
-  height: 65px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   font-weight: bold;
   color: white;
   background-color: #ddd;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
 .matchCircle[data-match="high"] {
@@ -149,13 +160,131 @@
   background-color: #F44336;
 }
 
+/* New styles for the improved layout */
+.boatsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  width: 100%;
+  gap: 20px;
+  margin-bottom: 30px;
+}
+
+.boatComparisonColumn {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.matchCircleContainer {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0 20px;
+  width: 120px;
+}
+
+.matchCircleWrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 80px;
+}
+
+.matchNumber {
+  font-size: 1.4rem;
+  font-weight: bold;
+}
+
 .matchLabel {
-  font-size: 0.7rem;
-  font-weight: 400;
+  margin-top: 8px;
+  font-size: 1rem;
+  color: #666;
+  font-weight: 500;
 }
 
 .boatDetails {
-  padding: 15px 0;
+  padding: 10px 15px;
+  width: 100%;
+}
+
+/* New styles for boat image display */
+.boatTitle {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 10px;
+  color: #333;
+  text-align: center;
+}
+
+.boatName {
+  font-size: 1rem;
+  font-weight: 500;
+  margin-top: 10px;
+  color: #555;
+  text-align: center;
+}
+
+.boatImageContainer {
+  width: 100%;
+  height: 200px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow: hidden;
+  border-radius: 8px;
+  background-color: #f8f8f8;
+}
+
+/* Specifications styles */
+.specificationsContainer {
+  display: flex;
+  width: 100%;
+  gap: 20px;
+  border-top: 1px solid #eaeaea;
+  padding-top: 20px;
+}
+
+.specificationColumn {
+  flex: 1;
+  min-width: 0;
+}
+
+.specificationTitle {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #336699;
+  background-color: #f0f6ff;
+  border-radius: 20px;
+  padding: 5px 15px;
+  display: inline-block;
+  margin-bottom: 15px;
+}
+
+.specificationGrid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.specificationItem {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid #f0f0f0;
+  padding-bottom: 8px;
+}
+
+.specificationLabel {
+  font-weight: 500;
+  color: #666;
+}
+
+.specificationValue {
+  font-weight: 400;
+  color: #333;
 }
 
 .detailsGrid {
@@ -183,6 +312,10 @@
 
 .featuresContainer {
   padding: 20px;
+  width: 100%;
+  clear: both; /* Ensure it displays below the comparison */
+  border-top: 1px solid #eaeaea;
+  margin-top: 20px;
 }
 
 .sectionOval {
