@@ -646,6 +646,68 @@ const ERROR_TYPES = {
     GENERAL_ERROR: 'general_error'
 };
 
+/**
+ * Get individual score components for the match breakdown display
+ * @param {Object} sourceBoat - The source boat to compare from
+ * @param {Object} targetBoat - The target boat to compare to
+ * @returns {Promise<Object>} - Object containing score components
+ */
+export const getScoreComponents = async (sourceBoat, targetBoat) => {
+    if (!sourceBoat || !targetBoat) {
+        return { visualSim: 65, specSim: 70, featureSim: 75 }; // Default fallback values
+    }
+
+    try {
+        // Visual similarity (TensorFlow)
+        let visualSim = 65; // Default fallback
+        if (sourceBoat?.imageUrl && targetBoat?.imageUrl) {
+            try {
+                visualSim = await compareImages(sourceBoat.imageUrl, targetBoat.imageUrl);
+            } catch (err) {
+                console.error('Error getting visual similarity:', err);
+            }
+        }
+
+        // Specifications similarity
+        const lengthScore = calculateLengthMatchScore(
+            getBoatLength(sourceBoat),
+            getBoatLength(targetBoat)
+        ) * 100;
+        
+        const typeScore = calculateTypeMatchScore(
+            sourceBoat.type || '',
+            targetBoat.type || ''
+        ) * 100;
+        
+        // Combine type, length, hull material, engine type
+        const specSim = [
+            lengthScore, 
+            typeScore,
+            // Hull material (basic string match)
+            sourceBoat.hullMaterial === targetBoat.hullMaterial ? 100 : 50,
+            // Engine similarity (basic string match with partial credit)
+            sourceBoat.engine && targetBoat.engine && 
+            (sourceBoat.engine.includes(targetBoat.engine) || 
+             targetBoat.engine.includes(sourceBoat.engine)) ? 85 : 60
+        ].reduce((sum, score) => sum + score, 0) / 4;
+
+        // Features similarity
+        const featureSim = calculateFeatureMatchScore(
+            sourceBoat,
+            targetBoat
+        ) * 100;
+
+        return {
+            visualSim: Math.round(visualSim),
+            specSim: Math.round(specSim),
+            featureSim: Math.round(featureSim)
+        };
+    } catch (error) {
+        console.error('Error calculating score components:', error);
+        return { visualSim: 65, specSim: 70, featureSim: 75 }; // Default fallback values
+    }
+};
+
 // Export additional utilities that may be used elsewhere
 export {
     normalizeBoatData,

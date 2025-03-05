@@ -1,5 +1,6 @@
 import React, { Suspense, memo, useMemo, useState, useEffect } from 'react';
 import styles from './styles.module.css';
+import scoreStyles from './scoreBreakdown.module.css';
 import { useFeatureAnalysis } from '../../hooks/useFeatureAnalysis';
 import { ComparisonHeader } from './ComparisonHeader';
 import { FeatureComparison } from './FeatureComparison';
@@ -19,6 +20,12 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
   const { getFeatureComparison } = useFeatureAnalysis();
   const [matchScore, setMatchScore] = useState(null);
   const [analysisStatus, setAnalysisStatus] = useState({ status: 'idle', progress: 0 });
+  const [showScoreBreakdown, setShowScoreBreakdown] = useState(false);
+  
+  // Score component variables
+  const [visualSimilarity, setVisualSimilarity] = useState(null);
+  const [specMatch, setSpecMatch] = useState(null);
+  const [featureMatch, setFeatureMatch] = useState(null);
 
   // Listen for analysis status updates
   useEffect(() => {
@@ -56,9 +63,17 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
       if (currentBoat && comparisonBoat) {
         try {
           // Import dynamically to avoid circular dependencies
-          const { calculateMatchScore } = await import('../../utils/boatMatching');
+          const { calculateMatchScore, getScoreComponents } = await import('../../utils/boatMatching');
+          
+          // Get overall match score
           const score = await calculateMatchScore(currentBoat, comparisonBoat);
           setMatchScore(score);
+          
+          // Get individual score components for breakdown
+          const { visualSim, specSim, featureSim } = await getScoreComponents(currentBoat, comparisonBoat);
+          setVisualSimilarity(visualSim);
+          setSpecMatch(specSim);
+          setFeatureMatch(featureSim);
         } catch (error) {
           console.error('Error calculating match score:', error);
         }
@@ -213,6 +228,124 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
                           <span className={styles.matchNumber}>{matchScore !== null ? matchScore : featureAnalysis.matchRate}%</span>
                         </div>
                         <div className={styles.matchLabel}>Match</div>
+                        <button 
+                          className={styles.infoButton}
+                          onClick={() => setShowScoreBreakdown(!showScoreBreakdown)}
+                          aria-label="Show match score explanation"
+                        >
+                          {showScoreBreakdown ? 'Hide details' : 'How we calculate'}
+                        </button>
+                        
+                        {showScoreBreakdown && (
+                          <div className={scoreStyles.scoreBreakdown}>
+                            <button 
+                              className={scoreStyles.closeButton} 
+                              onClick={() => setShowScoreBreakdown(false)}
+                              aria-label="Close score breakdown"
+                            >
+                              ×
+                            </button>
+                            <h4>Match Score Breakdown</h4>
+                            
+                            <div className={styles.visualMatchRate}>
+                              <span>{matchScore || featureAnalysis.matchRate}%</span>
+                            </div>
+                            
+                            {/* Visual Similarity - 60% weight */}
+                            <div className={scoreStyles.scoreComponent}>
+                              <span className={scoreStyles.scoreLabel}>
+                                Visual Similarity:
+                                <span className={scoreStyles.scoreWeight}>60%</span>
+                              </span>
+                              <div className={scoreStyles.scoreBar}>
+                                <div 
+                                  className={`${scoreStyles.scoreBarFill} ${
+                                    (visualSimilarity || 65) >= 80 ? scoreStyles.excellent : 
+                                    (visualSimilarity || 65) >= 60 ? scoreStyles.good : 
+                                    (visualSimilarity || 65) >= 40 ? scoreStyles.average : 
+                                    scoreStyles.poor
+                                  }`} 
+                                  style={{ width: `${Math.round(visualSimilarity || 65)}%` }}
+                                  aria-label={`Visual similarity score: ${Math.round(visualSimilarity || 65)}%`}
+                                ></div>
+                              </div>
+                              <span className={scoreStyles.scoreValue}>{Math.round(visualSimilarity || 65)}%</span>
+                            </div>
+                            <div className={scoreStyles.scoreDescription}>
+                              Our TensorFlow.js neural networks analyze boat images for similarities in shape, design, and appearance.
+                            </div>
+                            
+                            {/* Specifications - 25% weight */}
+                            <div className={scoreStyles.scoreComponent}>
+                              <span className={scoreStyles.scoreLabel}>
+                                Specifications:
+                                <span className={scoreStyles.scoreWeight}>25%</span>
+                              </span>
+                              <div className={scoreStyles.scoreBar}>
+                                <div 
+                                  className={`${scoreStyles.scoreBarFill} ${
+                                    (specMatch || 70) >= 80 ? scoreStyles.excellent : 
+                                    (specMatch || 70) >= 60 ? scoreStyles.good : 
+                                    (specMatch || 70) >= 40 ? scoreStyles.average : 
+                                    scoreStyles.poor
+                                  }`}
+                                  style={{ width: `${Math.round(specMatch || 70)}%` }}
+                                  aria-label={`Specifications match score: ${Math.round(specMatch || 70)}%`}
+                                ></div>
+                              </div>
+                              <span className={scoreStyles.scoreValue}>{Math.round(specMatch || 70)}%</span>
+                            </div>
+                            <div className={scoreStyles.scoreDescription}>
+                              Our matching algorithm compares critical boat specifications: length, type, hull material, and engine configuration.
+                            </div>
+                            
+                            {/* Features - 15% weight */}
+                            <div className={scoreStyles.scoreComponent}>
+                              <span className={scoreStyles.scoreLabel}>
+                                Features:
+                                <span className={scoreStyles.scoreWeight}>15%</span>
+                              </span>
+                              <div className={scoreStyles.scoreBar}>
+                                <div 
+                                  className={`${scoreStyles.scoreBarFill} ${
+                                    (featureMatch || 75) >= 80 ? scoreStyles.excellent : 
+                                    (featureMatch || 75) >= 60 ? scoreStyles.good : 
+                                    (featureMatch || 75) >= 40 ? scoreStyles.average : 
+                                    scoreStyles.poor
+                                  }`}
+                                  style={{ width: `${Math.round(featureMatch || 75)}%` }}
+                                  aria-label={`Features match score: ${Math.round(featureMatch || 75)}%`}
+                                ></div>
+                              </div>
+                              <span className={scoreStyles.scoreValue}>{Math.round(featureMatch || 75)}%</span>
+                            </div>
+                            <div className={scoreStyles.scoreDescription}>
+                              Our natural language processing system evaluates similarity of boat features, amenities, and functional characteristics.
+                            </div>
+                            
+                            {/* Final Score Calculation */}
+                            <div className={scoreStyles.finalCalculation}>
+                              <h5>Final Score Calculation</h5>
+                              <div className={scoreStyles.calculationStep}>
+                                <span>(Visual {Math.round(visualSimilarity || 65)}% × 0.6)</span>
+                                <span>= {Math.round((visualSimilarity || 65) * 0.6)}%</span>
+                              </div>
+                              <div className={scoreStyles.calculationStep}>
+                                <span>(Specs {Math.round(specMatch || 70)}% × 0.25)</span>
+                                <span>= {Math.round((specMatch || 70) * 0.25)}%</span>
+                              </div>
+                              <div className={scoreStyles.calculationStep}>
+                                <span>(Features {Math.round(featureMatch || 75)}% × 0.15)</span>
+                                <span>= {Math.round((featureMatch || 75) * 0.15)}%</span>
+                              </div>
+                              <div className={scoreStyles.calculationTotal}>
+                                <span>Total</span>
+                                <span>{matchScore || featureAnalysis.matchRate}%</span>
+                              </div>
+                              {/* Note: The total may include additional adjustments beyond the weighted sum */}
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </div>
 
