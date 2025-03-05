@@ -1,6 +1,6 @@
 import React, { useState, useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
-import { analyzeBoatImage } from '../services/openaiService';
+import { analyzeUserBoatImage } from '../services/imageAnalysisService';
 import BoatAnalysisResults from './BoatAnalysisResults';
 import './ImageAnalysis.css';
 
@@ -47,8 +47,11 @@ const ImageAnalysis = () => {
     const progressInterval = startProgressSimulation();
 
     try {
-      // Call the API
-      const results = await analyzeBoatImage(file);
+      // Convert file to URL for analysis
+      const fileUrl = URL.createObjectURL(file);
+      
+      // Call the API - only analyze the user's boat image
+      const results = await analyzeUserBoatImage(fileUrl);
 
       clearInterval(progressInterval);
       setAnalysisProgress(100);

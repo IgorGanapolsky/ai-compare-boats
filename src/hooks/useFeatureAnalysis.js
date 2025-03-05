@@ -1,4 +1,5 @@
-import { useMemo, useCallback } from 'react';
+// Only import what we need
+import {useCallback} from 'react';
 
 const SIMILARITY_THRESHOLD = 0.5;
 
@@ -110,4 +111,4 @@ export const useFeatureAnalysis = () => {
     return {
         getFeatureComparison
     };
-}; 
+};

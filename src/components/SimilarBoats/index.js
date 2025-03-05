@@ -6,7 +6,6 @@ import { calculateMatchScore } from '../../utils/boatMatching';
 import { DetailedComparison } from '../DetailedComparison';
 import ErrorHandler from '../ErrorHandler';
 import LoadingSpinner from '../ui/LoadingSpinner';
-import FeatureList from './FeatureList';
 import BoatCard from './BoatCard';
 
 /**

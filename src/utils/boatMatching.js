@@ -1,9 +1,10 @@
 /**
  * Utility functions for boat matching and comparison
- * Using GPT-4o as the single source of truth for match scores
+ * Using GPT-4o and TensorFlow.js for enhanced boat matching
  */
 
 import { analyzeBoatImage } from '../services/imageAnalysisService';
+import { compareImages } from '../services/tensorflowService';
 
 /**
  * Extracts boat length from various data fields
@@ -295,25 +296,67 @@ export const calculateMatchScore = async (sourceBoat, targetBoat) => {
             return 100;
         }
 
-        // 2. IMAGE ANALYSIS - Primary scoring method using GPT-4o
+        // 2. VISUAL COMPARISON - If both boats have images, use TensorFlow image similarity
         if (sourceBoat?.imageUrl && targetBoat?.imageUrl) {
             try {
-                // Call the image analysis service with additional logging
-                console.log('Calling image analysis service for detailed comparison...');
-                const imageAnalysis = await analyzeBoatImage(sourceBoat.imageUrl, targetBoat.imageUrl);
-
-                if (imageAnalysis && typeof imageAnalysis.similarityScore === 'number') {
-                    const score = Math.round(imageAnalysis.similarityScore);
-                    console.log(`✓ IMAGE ANALYSIS SCORE: ${score}% (source: ${imageAnalysis.source || 'unknown'})`);
-
-                    // If same image URLs are detected, ensure 100% match
-                    if (imageAnalysis.source === 'identical_images' && score !== 100) {
-                        console.log('Identical images detected but score was not 100%, correcting to 100%');
-                        return 100;
-                    }
-
-                    return score;
+                console.log('Performing TensorFlow visual similarity analysis...');
+                const visualSimilarity = await compareImages(sourceBoat.imageUrl, targetBoat.imageUrl);
+                console.log(`Visual similarity between boats: ${visualSimilarity}%`);
+                
+                // If visual similarity is very high, trust it more
+                if (visualSimilarity > 80) {
+                    // For high visual similarity, heavily weight the visual score
+                    // but still blend with some text analysis for robustness
+                    const textScore = await calculateEnhancedTextScore(sourceBoat, targetBoat);
+                    const blendedScore = (visualSimilarity * 0.8) + (textScore * 0.2);
+                    console.log(`High visual similarity detected (${visualSimilarity}%), blended with text score: ${blendedScore.toFixed(1)}%`);
+                    return Math.round(blendedScore);
                 }
+                
+                // For medium visual similarity, blend visual and text scores more evenly
+                if (visualSimilarity > 50) {
+                    // For medium visual similarity, blend scores more evenly
+                    const textScore = await calculateEnhancedTextScore(sourceBoat, targetBoat);
+                    const blendedScore = (visualSimilarity * 0.6) + (textScore * 0.4);
+                    console.log(`Medium visual similarity (${visualSimilarity}%), blended with text score: ${blendedScore.toFixed(1)}%`);
+                    return Math.round(blendedScore);
+                }
+            } catch (visualError) {
+                console.error('Error during visual comparison:', visualError);
+                // Continue to other comparison methods
+            }
+        }
+
+        // 3. For the user's uploaded boat (sourceBoat) with image:
+        // - First, analyze it with GPT-4o only once (if not already analyzed)
+        // - Then use local comparison against sampleBoats
+        if (sourceBoat?.imageUrl) {
+            try {
+                console.log('Performing one-time analysis of uploaded boat image...');
+
+                // We don't need to pass the target boat image to OpenAI
+                // We'll just analyze the source (uploaded) boat once
+                if (sourceBoat.name === 'Your Reference Boat') {
+                    // This is the uploaded boat. Check if it has already been analyzed
+                    // Check for already extracted features
+                    const hasExtractedFeatures = sourceBoat.keyFeatures && 
+                                              sourceBoat.keyFeatures.length > 0 && 
+                                              sourceBoat.type;
+                    
+                    if (!hasExtractedFeatures) {
+                        // We need to analyze the uploaded boat with GPT-4o
+                        console.log('Analyzing user uploaded boat with GPT-4o...');
+                        // Make the API call for the uploaded boat only
+                        const sourceBoatFeatures = await analyzeBoatImage(sourceBoat.imageUrl, null);
+                        
+                        // Store the features on the sourceBoat object for future comparisons
+                        Object.assign(sourceBoat, sourceBoatFeatures);
+                    }
+                }
+                
+                // Now compare the analyzed source boat with the target boat using local comparison
+                console.log('Using enhanced text-based comparison between boats...');
+                return calculateEnhancedTextScore(sourceBoat, targetBoat);
             } catch (analysisError) {
                 console.error('Error during image analysis:', analysisError);
                 // Continue to fallback methods
@@ -322,13 +365,58 @@ export const calculateMatchScore = async (sourceBoat, targetBoat) => {
             console.log('⚠️ Missing image URLs, using text-based comparison');
         }
 
-        // 3. FALLBACK - Use metadata comparison when image analysis fails
+        // 4. FALLBACK - Use metadata comparison
         return calculateTextBasedMatchScore(sourceBoat, targetBoat);
 
     } catch (error) {
         console.error('Error in boat matching:', error);
         return 45; // Conservative fallback
     }
+};
+
+/**
+ * Enhanced text score calculation that gives higher weight to critical features
+ * @param {Object} boat1 - First boat
+ * @param {Object} boat2 - Second boat
+ * @returns {Promise<number>} - Match percentage (0-100)
+ */
+export const calculateEnhancedTextScore = async (boat1, boat2) => {
+    // Start with basic text-based matching
+    const baseScore = calculateTextBasedMatchScore(boat1, boat2);
+    
+    // Extract normalized boats
+    const normalizedBoat1 = normalizeBoatData(boat1);
+    const normalizedBoat2 = normalizeBoatData(boat2);
+    
+    // Increase weight for exact type matches
+    let bonusPoints = 0;
+    
+    // Add bonus for exact type match
+    if (normalizedBoat1.type && 
+        normalizedBoat2.type && 
+        normalizedBoat1.type.toLowerCase() === normalizedBoat2.type.toLowerCase()) {
+        bonusPoints += 10;
+    }
+    
+    // Add bonus for exact length match (within 1 foot)
+    if (normalizedBoat1.length && 
+        normalizedBoat2.length && 
+        Math.abs(normalizedBoat1.length - normalizedBoat2.length) <= 1) {
+        bonusPoints += 5;
+    }
+    
+    // Add bonus for hull material match
+    if (normalizedBoat1.hullMaterial && 
+        normalizedBoat2.hullMaterial && 
+        normalizedBoat1.hullMaterial.toLowerCase() === normalizedBoat2.hullMaterial.toLowerCase()) {
+        bonusPoints += 5;
+    }
+    
+    // Calculate enhanced score with bonuses, capped at 99
+    const enhancedScore = Math.min(99, baseScore + bonusPoints);
+    
+    console.log(`Enhanced text score: ${baseScore} + ${bonusPoints} bonus = ${enhancedScore}`);
+    return enhancedScore;
 };
 
 /**

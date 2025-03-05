@@ -18,6 +18,7 @@ import LoadingSpinner from '../ui/LoadingSpinner';
  */
 export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }) => {
   const { getFeatureComparison } = useFeatureAnalysis();
+  const [matchScore, setMatchScore] = useState(null);
   const [analysisStatus, setAnalysisStatus] = useState({ status: 'idle', progress: 0 });
 
   // Listen for analysis status updates
@@ -32,6 +33,24 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
       window.removeEventListener('boat-analysis-status', handleAnalysisStatus);
     };
   }, []);
+
+  // Calculate match score using the same method as the Similar Boats list
+  useEffect(() => {
+    const calculateScore = async () => {
+      if (currentBoat && comparisonBoat) {
+        try {
+          // Import dynamically to avoid circular dependencies
+          const { calculateMatchScore } = await import('../../utils/boatMatching');
+          const score = await calculateMatchScore(currentBoat, comparisonBoat);
+          setMatchScore(score);
+        } catch (error) {
+          console.error('Error calculating match score:', error);
+        }
+      }
+    };
+    
+    calculateScore();
+  }, [currentBoat, comparisonBoat]);
 
   // Calculate feature comparison with error handling
   const featureAnalysis = useMemo(() => {
@@ -132,7 +151,7 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
                   <BoatColumn
                     boat={comparisonBoat}
                     title="Match"
-                    matchRate={featureAnalysis.matchRate}
+                    matchRate={matchScore !== null ? matchScore : featureAnalysis.matchRate}
                     showPrice={true}
                     showLocation={true}
                   />

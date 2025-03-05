@@ -6,6 +6,8 @@
     "@mantine/core": "^7.16.2",
     "@mantine/hooks": "^7.16.2",
     "@tanstack/react-query": "^5.28.0",
+    "@tensorflow-models/mobilenet": "^2.1.1",
+    "@tensorflow/tfjs": "^4.22.0",
     "@types/node": "^20.11.24",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
