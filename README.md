@@ -53,22 +53,35 @@ The application follows modern React best practices for 2025:
 ### Prerequisites
 
 - Node.js 18.0 or higher
-- NPM 9.0 or higher
+- Yarn 1.22.0 or higher (recommended)
+- GitHub Personal Access Token with `read:packages` scope for accessing shared packages
 
 ### Installation
 
+#### 1. Configure GitHub Packages Access
+
+The application uses shared packages hosted on GitHub Packages. Create a `.npmrc` file with your GitHub token:
+
+```bash
+# Create .npmrc file with GitHub Packages configuration
+echo "@igorganapolsky:registry=https://npm.pkg.github.com" >> .npmrc
+echo "//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN" >> .npmrc
+```
+
+#### 2. Install and Run
+
 ```bash
 # Clone the repository
-git clone https://github.com/your-username/boats-image-analysis.git
+git clone https://github.com/IgorGanapolsky/ai-compare-boats.git
 
 # Navigate to the project directory
-cd boats-image-analysis
+cd ai-compare-boats
 
 # Install dependencies
-npm install
+yarn install
 
 # Start the development server
-npm start
+yarn start
 ```
 
 ### Environment Variables
@@ -88,12 +101,25 @@ src/
 │   ├── ui/             # Shared UI components
 │   ├── SimilarBoats/   # Boat comparison components
 │   └── DetailedComparison/ # Detailed feature comparison
+├── features/           # Feature-based components and logic
 ├── hooks/              # Custom React hooks
 ├── services/           # API service layer
+├── shared/             # Shared utilities and components
 ├── utils/              # Utility functions
 ├── types/              # TypeScript type definitions
 └── styles/             # Global styles
 ```
+
+## Shared Packages
+
+This project uses the following shared packages from the `boats-shared-packages` repository:
+
+- **@igorganapolsky/boats-core**: Core business logic and utilities
+- **@igorganapolsky/boats-hooks**: React hooks for boat comparison and analysis
+- **@igorganapolsky/boats-api**: API client services
+- **@igorganapolsky/boats-types**: Shared TypeScript types
+
+These packages are maintained separately to enable code sharing across multiple Boats.com applications.
 
 ## Key Features
 

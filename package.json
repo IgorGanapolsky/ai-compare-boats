@@ -3,6 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
+    "@boats/core": "file:../boats-packages/packages/core",
+    "@boats/hooks": "file:../boats-packages/packages/hooks",
+    "@boats/api": "file:../boats-packages/packages/api",
+    "@boats/types": "file:../boats-packages/packages/types", 
     "@mantine/core": "^7.16.2",
     "@mantine/hooks": "^7.16.2",
     "@tanstack/react-query": "^5.28.0",
