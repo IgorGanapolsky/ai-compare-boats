@@ -1,23 +1,46 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
-# dependencies
+# Dependencies and package management
+node_modules/
 /node_modules
 /.pnp
 .pnp.js
+yarn-error.log*
+yarn-debug.log*
+npm-debug.log*
+package-lock.json
 
-# testing
-/coverage
-
-# production
+# Build and output directories
 /build
+build/
+dist/
+/dist
+.next/
+out/
 
-# IDE
+# Testing and coverage
+/coverage
+coverage/
+.nyc_output/
+
+# IDE and editor files
 .idea/
+.vscode/
+*.swp
+*.swo
+*~
+.project
+.classpath
+.settings/
 
-# misc
+# Operating system files
 .DS_Store
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
 
-# Environment files
+# Environment and config files
 .env
 .env.local
 .env.development.local
@@ -27,8 +50,36 @@
 !.env.example
 /.env
 
+# Logs
+logs/
+*.log
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
+# Documentation files not needed in repo
+CLAUDE.md
+TODO.md
+BRAINSTORM.md
 
+# Mobile app specific
+ios/Pods/
+ios/build/
+ios/Podfile.lock
+android/app/build/
+android/.gradle/
+android/captures/
+android/local.properties
+*.apk
+*.aab
+*.ipa
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# Generated files
+.eslintcache
+.stylelintcache
+.jest-cache/
