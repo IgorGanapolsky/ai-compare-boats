@@ -54,21 +54,8 @@ The application follows modern React best practices for 2025:
 
 - Node.js 18.0 or higher
 - Yarn 1.22.0 or higher (recommended)
-- GitHub Personal Access Token with `read:packages` scope for accessing shared packages
 
 ### Installation
-
-#### 1. Configure GitHub Packages Access
-
-The application uses shared packages hosted on GitHub Packages. Create a `.npmrc` file with your GitHub token:
-
-```bash
-# Create .npmrc file with GitHub Packages configuration
-echo "@igorganapolsky:registry=https://npm.pkg.github.com" >> .npmrc
-echo "//npm.pkg.github.com/:_authToken=YOUR_GITHUB_TOKEN" >> .npmrc
-```
-
-#### 2. Install and Run
 
 ```bash
 # Clone the repository
@@ -112,14 +99,14 @@ src/
 
 ## Shared Packages
 
-This project uses the following shared packages from the `boats-shared-packages` repository:
+This project uses the following locally linked packages:
 
-- **@igorganapolsky/boats-core**: Core business logic and utilities
-- **@igorganapolsky/boats-hooks**: React hooks for boat comparison and analysis
-- **@igorganapolsky/boats-api**: API client services
-- **@igorganapolsky/boats-types**: Shared TypeScript types
+- **@boats/core**: Core business logic and utilities
+- **@boats/hooks**: React hooks for boat comparison and analysis
+- **@boats/api**: API client services
+- **@boats/types**: Shared TypeScript types
 
-These packages are maintained separately to enable code sharing across multiple Boats.com applications.
+These packages are located in the `../boats-packages/packages/` directory and are maintained separately to enable code sharing across multiple Boats.com applications.
 
 ## Key Features
 
