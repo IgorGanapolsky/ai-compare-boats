@@ -1094,19 +1094,19 @@
 "@boats/api@file:../boats-packages/packages/api":
   version "0.1.0"
   dependencies:
-    "@boats/core" "file:../../../../../../Library/Caches/Yarn/v6/npm-@boats-api-0.1.0-bea22759-d4a5-431c-b0cd-ec00b7ad5e6c-1741624656682/node_modules/@boats/core"
-    "@boats/types" "file:../../../../../../Library/Caches/Yarn/v6/npm-@boats-api-0.1.0-bea22759-d4a5-431c-b0cd-ec00b7ad5e6c-1741624656682/node_modules/@boats/types"
+    "@boats/core" "file:../boats-packages/packages/core"
+    "@boats/types" "file:../boats-packages/packages/types"
 
 "@boats/core@file:../boats-packages/packages/core":
   version "0.1.0"
   dependencies:
-    "@boats/types" "file:../../../../../../Library/Caches/Yarn/v6/npm-@boats-core-0.1.0-29be8b81-6536-4587-b29b-ccb3b22be325-1741624656342/node_modules/@boats/types"
+    "@boats/types" "file:../boats-packages/packages/types"
 
 "@boats/hooks@file:../boats-packages/packages/hooks":
   version "0.1.0"
   dependencies:
-    "@boats/core" "file:../../../../../../Library/Caches/Yarn/v6/npm-@boats-hooks-0.1.0-dcc3d2ec-6284-43b2-b503-047e97cb760a-1741624656346/node_modules/@boats/core"
-    "@boats/types" "file:../../../../../../Library/Caches/Yarn/v6/npm-@boats-hooks-0.1.0-dcc3d2ec-6284-43b2-b503-047e97cb760a-1741624656346/node_modules/@boats/types"
+    "@boats/core" "file:../boats-packages/packages/core"
+    "@boats/types" "file:../boats-packages/packages/types"
     "@tanstack/react-query" "^5.8.4"
 
 "@boats/types@file:../boats-packages/packages/types":
@@ -5403,9 +5403,9 @@ http-proxy-agent@^4.0.1:
     debug "4"
 
 http-proxy-middleware@^2.0.3:
-  version "2.0.7"
-  resolved "https://registry.npmjs.org/http-proxy-middleware/-/http-proxy-middleware-2.0.7.tgz#915f236d92ae98ef48278a95dedf17e991936ec6"
-  integrity sha512-fgVY8AV7qU7z/MmXJ/rxwbrtQH4jBQ9m7kp3llF0liB7glmFeVZFBepQb32T3y8n8k2+AEYuMPCpinYW+/CuRA==
+  version "2.0.9"
+  resolved "https://registry.yarnpkg.com/http-proxy-middleware/-/http-proxy-middleware-2.0.9.tgz#e9e63d68afaa4eee3d147f39149ab84c0c2815ef"
+  integrity sha512-c1IyJYLYppU574+YI7R4QyX2ystMtVXZwIdzazUIPIJsHuWNd+mho2j+bKoHftndicGj9yh+xjd+l0yj7VeT1Q==
   dependencies:
     "@types/http-proxy" "^1.17.8"
     http-proxy "^1.18.1"
