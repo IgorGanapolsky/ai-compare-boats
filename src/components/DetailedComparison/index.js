@@ -129,19 +129,23 @@ export const DetailedComparison = memo(({ currentBoat, comparisonBoat, onClose }
     }
 
     try {
+      // Use the same feature comparison logic that's used in the score calculation
       return getFeatureComparison(currentBoat, comparisonBoat);
     } catch (error) {
       console.error("Error in feature comparison:", error);
+      
+      // Log more details to help diagnose issues
+      console.log("Source boat:", currentBoat?.name);
+      console.log("Target boat:", comparisonBoat?.name);
 
       // Return a reasonable fallback
       return {
-        commonFeatures: Array.isArray(currentBoat.features) ?
-          currentBoat.features.slice(0, 3) : [],
+        commonFeatures: [],
         uniqueToFirst: Array.isArray(currentBoat.features) ?
-          currentBoat.features.slice(3, 6) : [],
+          currentBoat.features.slice(0, 3) : [],
         uniqueToSecond: Array.isArray(comparisonBoat.features) ?
           comparisonBoat.features.slice(0, 3) : [],
-        matchRate: 75 // Default reasonable match rate
+        matchRate: 0 // Don't show arbitrary match rate
       };
     }
   }, [currentBoat, comparisonBoat, getFeatureComparison]);

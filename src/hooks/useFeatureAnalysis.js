@@ -1,8 +1,6 @@
 // Only import what we need
 import {useCallback} from 'react';
 
-const SIMILARITY_THRESHOLD = 0.5;
-
 export const useFeatureAnalysis = () => {
     const normalizeFeature = useCallback((feature) => {
         if (typeof feature !== 'string') return '';
@@ -43,11 +41,13 @@ export const useFeatureAnalysis = () => {
 
         if (words1.length === 0 || words2.length === 0) return false;
 
+        // Look for significant words (more than 3 characters) that match
         const commonWords = words1.filter(word =>
-            words2.some(w2 => w2.includes(word) || word.includes(w2))
+            word.length > 3 && words2.some(w2 => w2.includes(word) || word.includes(w2))
         );
 
-        return commonWords.length / Math.max(words1.length, words2.length) >= SIMILARITY_THRESHOLD;
+        // Lower threshold that matches boatMatching.js logic
+        return commonWords.length > 0;
     }, []);
 
     const findOriginalText = useCallback((normalizedFeature, boat) => {

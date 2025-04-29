@@ -151,50 +151,96 @@ const calculateLengthMatchScore = (length1, length2) => {
 };
 
 /**
- * Calculate feature match score between two boat features
- * @param {Array<string>} features1 - First boat features
- * @param {Array<string>} features2 - Second boat features
- * @returns {number} - Match score between 0-1
+ * Extracts boat features from various sources
  */
-const calculateFeatureMatchScore = (boat1, boat2) => {
-    if (!boat1 || !boat2) return 0;
+export const extractFeaturesFromBoat = (boat) => {
+    try {
+        if (!boat) return new Set();
 
-    let matchPoints = 0;
-    let totalPoints = 0;
-
-    // Compare boat type
-    if (boat1.type && boat2.type) {
-        totalPoints += 25;
-        if (boat1.type.toLowerCase() === boat2.type.toLowerCase()) {
-            matchPoints += 25;
-        }
+        const features = new Set();
+        
+        // Extract features from different properties
+        const featureSources = [
+            boat.features || [],
+            boat.keyFeatures || [],
+            boat.style || []
+        ];
+        
+        // Add all features to the set
+        featureSources.forEach(source => {
+            source.forEach(feature => {
+                if (feature && typeof feature === 'string') {
+                    // Normalize to lowercase for better matching
+                    features.add(feature.toLowerCase().trim());
+                }
+            });
+        });
+        
+        // Extract additional features from other properties
+        const additionalFeatures = [];
+        
+        if (boat.deckLayout) additionalFeatures.push(`Deck layout: ${boat.deckLayout}`);
+        if (boat.cabinLayout) additionalFeatures.push(`Cabin layout: ${boat.cabinLayout}`);
+        
+        return [...features, ...additionalFeatures].filter(Boolean);
+    } catch (error) {
+        console.warn('Error extracting features:', error);
+        return [];
     }
+};
 
-    // Compare size/length (within 10%)
-    if (boat1.length && boat2.length) {
-        const length1 = parseFloat(boat1.length);
-        const length2 = parseFloat(boat2.length);
+/**
+ * Determine if two sets of features are similar
+ * This needs to match the logic in useFeatureAnalysis.js
+ */
+export const areSimilarFeatures = (feature1, feature2) => {
+    if (!feature1 || !feature2) return false;
 
-        if (!isNaN(length1) && !isNaN(length2)) {
-            totalPoints += 25;
-            const sizeDiff = Math.abs(length1 - length2);
-            const sizePercentDiff = sizeDiff / Math.max(length1, length2);
+    try {
+        // Convert to strings and normalize
+        const f1 = String(feature1).toLowerCase().trim();
+        const f2 = String(feature2).toLowerCase().trim();
 
-            if (sizePercentDiff <= 0.1) { // Within 10%
-                matchPoints += 25;
-            } else if (sizePercentDiff <= 0.2) { // Within 20%
-                matchPoints += 15;
-            }
+        // Exact match
+        if (f1 === f2) return true;
+
+        // One contains the other
+        if (f1.includes(f2) || f2.includes(f1)) return true;
+
+        // Calculate word similarity
+        const words1 = f1.split(/\s+/);
+        const words2 = f2.split(/\s+/);
+
+        if (words1.length && words2.length) {
+            // Look for significant words (more than 3 characters) that match
+            const commonWords = words1.filter(word =>
+                word.length > 3 && words2.some(w2 => w2.includes(word) || word.includes(w2))
+            );
+
+            // If any significant words match, consider features similar
+            return commonWords.length > 0;
         }
+
+        return false;
+    } catch (error) {
+        console.warn('Error comparing features:', error);
+        return false;
     }
+};
 
-    // Compare features
-    const features1 = extractFeaturesFromBoat(boat1);
-    const features2 = extractFeaturesFromBoat(boat2);
-
-    if (features1.size > 0 && features2.size > 0) {
-        totalPoints += 50;
-
+/**
+ * Calculate how similar the features of two boats are
+ * Returns a percentage between 0-100
+ */
+export const calculateFeatureMatchScore = (boat1, boat2) => {
+    try {
+        const features1 = extractFeaturesFromBoat(boat1);
+        const features2 = extractFeaturesFromBoat(boat2);
+        
+        if (!features1.length || !features2.length) {
+            return 0;
+        }
+        
         let commonFeatureCount = 0;
         for (const feature1 of features1) {
             for (const feature2 of features2) {
@@ -204,13 +250,17 @@ const calculateFeatureMatchScore = (boat1, boat2) => {
                 }
             }
         }
-
-        const featureMatchRate = commonFeatureCount / Math.max(features1.size, features2.size);
-        matchPoints += Math.round(featureMatchRate * 50);
+        
+        // Calculate feature match rate using same formula as in useFeatureAnalysis.js
+        // This ensures UI consistency between score and display
+        const totalFeatures = features1.length + features2.length;
+        if (totalFeatures === 0) return 0;
+        
+        return Math.round((commonFeatureCount * 2) / totalFeatures * 100);
+    } catch (error) {
+        console.warn('Error calculating feature match score:', error);
+        return 0;
     }
-
-    // Calculate final score (avoid division by zero)
-    return totalPoints > 0 ? Math.round((matchPoints / totalPoints) * 100) : 0;
 };
 
 /**
@@ -549,104 +599,6 @@ const calculateTextBasedMatchScore = (boat1, boat2) => {
 };
 
 /**
- * Extract relevant features from a boat object
- * @param {Object} boat - Boat object
- * @returns {Array} - Array of features
- */
-export const extractFeaturesFromBoat = (boat) => {
-    if (!boat) return [];
-
-    try {
-        // Extract features array
-        let features = [];
-
-        if (Array.isArray(boat.features)) {
-            features = [...boat.features];
-        } else if (boat.features) {
-            features = [boat.features];
-        }
-
-        // Add additional properties as features if they exist
-        const additionalFeatures = [];
-
-        if (boat.engine) additionalFeatures.push(`Engine: ${boat.engine}`);
-        if (boat.hullMaterial) additionalFeatures.push(`Hull: ${boat.hullMaterial}`);
-        if (boat.fuelType) additionalFeatures.push(`Fuel: ${boat.fuelType}`);
-        if (boat.propulsionType) additionalFeatures.push(`Propulsion: ${boat.propulsionType}`);
-
-        return [...features, ...additionalFeatures].filter(Boolean);
-    } catch (error) {
-        console.warn('Error extracting features:', error);
-        return [];
-    }
-};
-
-/**
- * Determine if two sets of features are similar
- * @param {Object} feature1 - First feature string
- * @param {Object} feature2 - Second feature string
- * @returns {boolean} - Whether features are similar
- */
-export const areSimilarFeatures = (feature1, feature2) => {
-    if (!feature1 || !feature2) return false;
-
-    try {
-        // Convert to strings and normalize
-        const f1 = String(feature1).toLowerCase().trim();
-        const f2 = String(feature2).toLowerCase().trim();
-
-        // Exact match
-        if (f1 === f2) return true;
-
-        // One contains the other
-        if (f1.includes(f2) || f2.includes(f1)) return true;
-
-        // Calculate word similarity
-        const words1 = f1.split(/\s+/);
-        const words2 = f2.split(/\s+/);
-
-        if (words1.length && words2.length) {
-            // Count common words
-            const commonWords = words1.filter(word =>
-                word.length > 3 && words2.includes(word)
-            );
-
-            // More than 50% words in common
-            if (commonWords.length >= Math.min(words1.length, words2.length) * 0.5) {
-                return true;
-            }
-        }
-
-        return false;
-    } catch (error) {
-        console.warn('Error comparing features:', error);
-        return false;
-    }
-};
-
-/**
- * Constants for matching algorithm
- */
-const MATCH_WEIGHTS = {
-    type: 0.4,    // 40%
-    length: 0.3,  // 30%
-    name: 0.2,    // 20%
-    features: 0.1 // 10%
-};
-
-/**
- * Error types for better handling and reporting
- */
-const ERROR_TYPES = {
-    API_UNAVAILABLE: 'api_unavailable',
-    API_RATE_LIMIT: 'api_rate_limit',
-    API_TOKEN_INVALID: 'api_token_invalid',
-    DATA_INCOMPLETE: 'data_incomplete',
-    TYPE_MISMATCH: 'type_mismatch',
-    GENERAL_ERROR: 'general_error'
-};
-
-/**
  * Get individual score components for the match breakdown display
  * @param {Object} sourceBoat - The source boat to compare from
  * @param {Object} targetBoat - The target boat to compare to
@@ -695,7 +647,7 @@ export const getScoreComponents = async (sourceBoat, targetBoat) => {
         const featureSim = calculateFeatureMatchScore(
             sourceBoat,
             targetBoat
-        ) * 100;
+        );
 
         return {
             visualSim: Math.round(visualSim),
@@ -708,12 +660,33 @@ export const getScoreComponents = async (sourceBoat, targetBoat) => {
     }
 };
 
+/**
+ * Constants for matching algorithm
+ */
+const MATCH_WEIGHTS = {
+    type: 0.4,    // 40%
+    length: 0.3,  // 30%
+    name: 0.2,    // 20%
+    features: 0.1 // 10%
+};
+
+/**
+ * Error types for better handling and reporting
+ */
+const ERROR_TYPES = {
+    API_UNAVAILABLE: 'api_unavailable',
+    API_RATE_LIMIT: 'api_rate_limit',
+    API_TOKEN_INVALID: 'api_token_invalid',
+    DATA_INCOMPLETE: 'data_incomplete',
+    TYPE_MISMATCH: 'type_mismatch',
+    GENERAL_ERROR: 'general_error'
+};
+
 // Export additional utilities that may be used elsewhere
 export {
     normalizeBoatData,
     getBoatLength,
     areBoatTypesRelated,
-    calculateFeatureMatchScore,
     MATCH_WEIGHTS,
     ERROR_TYPES
 };
